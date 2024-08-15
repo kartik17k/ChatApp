@@ -1,0 +1,12 @@
+flutter_native_splash:
+  android : true
+  ios : true
+  web : true
+
+  image : "images/chat2.png"
+  color : "#C3C3C3"
+
+  android 12:
+    color : "#C3C3C3"
+    image : "images/chat2.png"
+
