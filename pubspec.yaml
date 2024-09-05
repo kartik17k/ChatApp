@@ -48,8 +48,8 @@ dependencies:
   flutter_launcher_icons: ^0.13.1
 
 flutter_native_splash:
-  image : images/chat2.png
-  color : "#C3C3C3"
+  image : images/chat.png
+  color : "#FFFFFF"
 
 flutter_icons:
   android: true
