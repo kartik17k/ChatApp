@@ -16,6 +16,8 @@ class ChatService {
   }
 
 
+
+
   Future<void> sendMessage(String receiverID, String message, {String messageType = 'text'}) async {
     final String currentUserID = auth.currentUser!.uid;
     final String currentUserEmail = auth.currentUser!.email!;
@@ -41,6 +43,8 @@ class ChatService {
         .collection("messages")
         .add(newMessage.toMap());
   }
+
+
 
   Stream<QuerySnapshot> getMessages(String userID, String otherUserID) {
     List<String> ids = [userID, otherUserID];
@@ -82,4 +86,5 @@ class ChatService {
       await currentUser.delete();
     }
   }
+
 }

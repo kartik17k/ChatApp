@@ -1,67 +1,102 @@
 import 'package:chat/pages/settings.dart';
 import 'package:flutter/material.dart';
 import '../services/auth/authService.dart';
-
+import '../theme/colors.dart';
 
 class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
 
-  void logout(){
-    final authservice = AuthService();
-    authservice.signOut();
+  void logout(BuildContext context) {
+    final authService = AuthService();
+    Navigator.pop(context); // Close drawer before logging out
+    authService.signOut();
   }
-
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: const Color(0xFFFFF9F0), // Cream background color
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            children: [
-              DrawerHeader(
-                child: Center(
-                  child: Icon(Icons.message,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 75,
-                  ),
-                ),
+          // Drawer Header with Icon
+          DrawerHeader(
+            decoration:  BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  primaryColor,
+                  primaryColor.withOpacity(0.8),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              Padding(
-                padding: const EdgeInsets.only(left: 12.0),
-                child: ListTile(
-                  title: Text("H O M E"),
-                  leading: Icon(Icons.home),
-                  onTap: (){
-                    Navigator.pop(context);
-                  },
-                ),
+            ),
+            child: Center(
+              child: Icon(
+                Icons.message,
+                color: Colors.white, // White icon for contrast
+                size: 80,
               ),
-              Padding(
-                padding: const EdgeInsets.only(left: 12.0),
-                child: ListTile(
-                  title: Text("S E T T I N G"),
-                  leading: Icon(Icons.settings),
-                  onTap: (){
-                    Navigator.pop(context);
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => Settings(),));
-                  },
-                ),
-              ),
-            ],
+            ),
           ),
+
+          // Menu items
+          ListTile(
+            title: const Text(
+              "Home",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Color(0xFF4E342E), // Dark brown for text
+              ),
+            ),
+            leading: const Icon(Icons.home, size: 28, color: Color(0xFF4E342E)),
+            onTap: () {
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            title: const Text(
+              "Settings",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Color(0xFF4E342E), // Dark brown for text
+              ),
+            ),
+            leading: const Icon(Icons.settings, size: 28, color: Color(0xFF4E342E)),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>  Settings(),
+                ),
+              );
+            },
+          ),
+          const Spacer(), // Pushes Logout to the bottom
+
+          // Logout button
           Padding(
-            padding: const EdgeInsets.only(left: 12.0,bottom: 50),
+            padding: const EdgeInsets.only(bottom: 30.0),
             child: ListTile(
-              title: Text("L O G O U T"),
-              leading: Icon(Icons.logout),
-              onTap: logout,
+              title: const Text(
+                "Logout",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.redAccent,
+                  fontSize: 18,
+                ),
+              ),
+              leading: const Icon(
+                Icons.logout,
+                size: 28,
+                color: Colors.redAccent,
+              ),
+              onTap: () => logout(context),
             ),
           ),
         ],
       ),
-
     );
   }
 }

@@ -1,7 +1,6 @@
 import 'package:chat/components/buttons.dart';
 import 'package:chat/components/textfield.dart';
 import 'package:flutter/material.dart';
-
 import '../services/auth/authService.dart';
 import 'forget.dart';
 
@@ -13,22 +12,22 @@ class Login extends StatelessWidget {
   Login({super.key, required this.onTap});
 
   void login(BuildContext context) async {
-    //get auth services
+    // Get auth services
     final authService = AuthService();
-    //login
+    // Login
     try {
       await authService.signInWithEmailPassword(
           emailController.text, passwordController.text);
     } catch (e) {
-      //errors
+      // Show error dialog
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: Row(
             children: [
-              Icon(Icons.error, color: Colors.red),
-              SizedBox(width: 10),
-              Text("Error"),
+              const Icon(Icons.error, color: Colors.redAccent),
+              const SizedBox(width: 10),
+              const Text("Error"),
             ],
           ),
           content: Text(e.toString()),
@@ -37,10 +36,11 @@ class Login extends StatelessWidget {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text("OK"),
               style: TextButton.styleFrom(
-                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.redAccent,
               ),
+              child: const Text("OK"),
             ),
           ],
         ),
@@ -53,41 +53,45 @@ class Login extends StatelessWidget {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       body: Center(
-        //SingleFrameScrollView
         child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              //logo
+              // Logo
               Icon(
                 Icons.message,
                 size: 50,
                 color: Theme.of(context).colorScheme.primary,
               ),
               const SizedBox(height: 10),
-              //welcome message
+              // Welcome message
               Text(
                 "Welcome Back, missed you",
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 25),
-              //email
+              // Email input
               MyTextField(
                 hinttext: "Email",
                 obscuretext: false,
                 controller: emailController,
               ),
               const SizedBox(height: 5),
-              //password
+              // Password input
               MyTextField(
                 hinttext: "Password",
                 obscuretext: true,
                 controller: passwordController,
               ),
               const SizedBox(height: 10),
+              // Forgot Password
               Container(
                 alignment: Alignment.centerRight,
-                padding: EdgeInsets.symmetric(horizontal: 25),
+                padding: const EdgeInsets.symmetric(horizontal: 25),
                 child: GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -96,7 +100,7 @@ class Login extends StatelessWidget {
                     );
                   },
                   child: Text(
-                    "Forget Password?",
+                    "Forgot Password?",
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.inversePrimary,
                       fontWeight: FontWeight.bold,
@@ -105,13 +109,13 @@ class Login extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 25),
-              //sign button
+              // Login button
               Buttons(
                 onTap: () => login(context),
                 text: "Login",
               ),
               const SizedBox(height: 10),
-              //register
+              // Register text
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

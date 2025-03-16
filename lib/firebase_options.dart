@@ -25,15 +25,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -71,4 +65,23 @@ class DefaultFirebaseOptions {
     storageBucket: 'chat-a9a04.appspot.com',
     iosBundleId: 'com.example.chat',
   );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyAmug96j2RiPN4_pRAaPB-3dHOYcIkAUwE',
+    appId: '1:564540232720:ios:a5b4b46a64ec8aca2aa695',
+    messagingSenderId: '564540232720',
+    projectId: 'chat-a9a04',
+    storageBucket: 'chat-a9a04.appspot.com',
+    iosBundleId: 'com.example.chat',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyBNeaFJl7vrmvuhAXaWPZmnySlJaxqQMco',
+    appId: '1:564540232720:web:3af039b4eea58ec22aa695',
+    messagingSenderId: '564540232720',
+    projectId: 'chat-a9a04',
+    authDomain: 'chat-a9a04.firebaseapp.com',
+    storageBucket: 'chat-a9a04.appspot.com',
+  );
+
 }

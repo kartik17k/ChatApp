@@ -7,8 +7,7 @@ class Register extends StatelessWidget {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController confirmpasswordController = TextEditingController();
-
-  void Function()? onTap;
+  final void Function()? onTap;
 
   Register({super.key, required this.onTap});
 
@@ -37,7 +36,8 @@ class Register extends StatelessWidget {
                 },
                 child: Text("OK"),
                 style: TextButton.styleFrom(
-                  backgroundColor: Colors.red,
+                  backgroundColor: Theme.of(context).colorScheme.secondary, // Use secondary color from theme
+                  foregroundColor: Colors.white, // Text color
                 ),
               ),
             ],
@@ -64,6 +64,7 @@ class Register extends StatelessWidget {
               child: Text("OK"),
               style: TextButton.styleFrom(
                 backgroundColor: Colors.orange,
+                foregroundColor: Colors.white, // Text color
               ),
             ),
           ],
@@ -75,34 +76,37 @@ class Register extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).colorScheme.background, // Use background color from theme
       body: Center(
-        //single child scroll view to scroll
         child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              //logo
+              // Logo
               Icon(
                 Icons.message,
                 size: 50,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(context).colorScheme.primary, // Primary color from theme
               ),
               const SizedBox(height: 10),
-              //welcome message
+              // Welcome message
               Text(
                 "Create an account",
-                style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary, // Primary color from theme
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 25),
-              //email
+              // Email input
               MyTextField(
                 hinttext: "Email",
                 obscuretext: false,
                 controller: emailController,
               ),
               const SizedBox(height: 5),
-              //password
+              // Password input
               MyTextField(
                 hinttext: "Password",
                 obscuretext: true,
@@ -114,20 +118,20 @@ class Register extends StatelessWidget {
                 controller: confirmpasswordController,
               ),
               const SizedBox(height: 25),
-              //sign button
+              // Register button
               Buttons(
                 onTap: () => register(context),
                 text: "Register",
               ),
               const SizedBox(height: 10),
-              //register
+              // Redirect to login
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     "Have an account? ",
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.secondary,
+                      color: Theme.of(context).colorScheme.secondary, // Secondary color from theme
                     ),
                   ),
                   GestureDetector(
@@ -135,7 +139,7 @@ class Register extends StatelessWidget {
                     child: Text(
                       "Login Here",
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.inversePrimary,
+                        color: Theme.of(context).colorScheme.inversePrimary, // Inverse primary from theme
                         fontWeight: FontWeight.bold,
                       ),
                     ),

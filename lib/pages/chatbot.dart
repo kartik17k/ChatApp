@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../components/chatBubble.dart';
 
 class Chatbot extends StatefulWidget {
   const Chatbot({Key? key}) : super(key: key);
+
+
 
   @override
   _ChatbotState createState() => _ChatbotState();
@@ -13,15 +16,37 @@ class _ChatbotState extends State<Chatbot> {
   TextEditingController messageController = TextEditingController();
   List<Map<String, String>> messages = [];
 
+  final primaryColor = const Color(0xFFF77F64);
+  final secondaryColor = const Color(0xFFE5CFC0);
+  final backgroundColor = const Color(0xFFFFF9F0);
+  final textColor = const Color(0xFF2D3436);
+  final accentColor = const Color(0xFFFFE8A3);
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100], // Background color for the chat screen
+      backgroundColor: const Color(0xFFFFF9F0), // Chat screen background color
       appBar: AppBar(
-        title: const Text("ChatBot"),
-        backgroundColor: Colors.transparent, // Transparent AppBar background
+        title: const Text(
+          "ChatBot",
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        centerTitle: true,// No shadow under AppBar
+        flexibleSpace: Container(
+          decoration:  BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                primaryColor,
+                primaryColor.withOpacity(0.8),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
       ),
       body: Column(
         children: [
@@ -33,30 +58,11 @@ class _ChatbotState extends State<Chatbot> {
                 final message = messages[index];
                 final isUserMessage = message['sender'] == 'user';
 
-                return Align(
-                  alignment: isUserMessage
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft, // Align messages based on sender
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.symmetric(
-                        vertical: 4, horizontal: 8),
-                    decoration: BoxDecoration(
-                      color: isUserMessage
-                          ? Colors.greenAccent // User message color
-                          : Colors.grey[300], // Bot message color
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      message['message']!,
-                      style: TextStyle(
-                        color: isUserMessage
-                            ? Colors.white // User message text color
-                            : Colors.black, // Bot message text color
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
+                return ChatBubble(
+                  message: message['message']!,
+                  isCurrentUser: isUserMessage,
+                  userColor: const Color(0xFFF77F64), // Coral for user messages
+                  botColor: const Color(0xFFE5CFC0), // Cream for bot messages
                 );
               },
             ),
@@ -72,14 +78,14 @@ class _ChatbotState extends State<Chatbot> {
                       hintText: "Enter your message",
                       border: OutlineInputBorder(),
                       filled: true,
-                      fillColor: Colors.white, // Background color for text input
+                      fillColor: Colors.white, // Text input background color
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 FloatingActionButton(
                   onPressed: sendMessage,
-                  backgroundColor: Colors.redAccent, // Send button color
+                  backgroundColor: const Color(0xFFF77F64), // Send button color (coral)
                   child: const Icon(Icons.send, color: Colors.white),
                 ),
               ],
