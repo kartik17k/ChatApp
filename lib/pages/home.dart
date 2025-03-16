@@ -1,6 +1,5 @@
 import 'package:chat/components/drawer.dart';
 import 'package:chat/pages/chat.dart';
-import 'package:chat/pages/chatbot.dart';
 import 'package:chat/services/auth/authService.dart';
 import 'package:chat/services/chat/chatservice.dart';
 import 'package:flutter/material.dart';
@@ -56,20 +55,6 @@ class _HomeState extends State<Home> {
         ),
       ),
       drawer: MyDrawer(),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: primaryColor,
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => Chatbot()),
-          );
-        },
-        child: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-      ),
       body: Container(
         color: backgroundColor,
         child: Column(
