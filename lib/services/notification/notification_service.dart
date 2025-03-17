@@ -8,6 +8,31 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:http/http.dart' show Client;
+import 'package:chat/main.dart'; // Import the global navigator key
+
+// Background message handler
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Initialize Firebase if not already initialized
+  await Firebase.initializeApp();
+  print("Handling a background message: ${message.messageId}");
+
+  // Navigate to chat page when app is in background
+  final String? chatId = message.data['chatId'];
+  final String? senderEmail = message.data['senderEmail'];
+  final String? senderId = message.data['senderId'];
+
+  if (chatId != null && senderEmail != null && senderId != null) {
+    navigatorKey.currentState?.push(
+      MaterialPageRoute(
+        builder: (context) => Chat(
+          reciverEmail: senderEmail, 
+          reciverID: senderId,
+        ),
+      ),
+    );
+  }
+}
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -18,6 +43,9 @@ class NotificationService {
   static const String _firebaseScope = 'https://www.googleapis.com/auth/firebase.messaging';
 
   Future<void> init(BuildContext context) async {
+    // Set background message handler
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
     // Request notification permissions
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
@@ -32,10 +60,10 @@ class NotificationService {
       });
 
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        _navigateToChatPage(message, context);
+        _navigateToChatPage(message);
       });
 
-      // Initialize local notifications
+      // Initialize local notifications with a default channel
       const AndroidInitializationSettings initializationSettingsAndroid = 
           AndroidInitializationSettings('@mipmap/ic_launcher');
       final InitializationSettings initializationSettings = InitializationSettings(
@@ -44,9 +72,21 @@ class NotificationService {
       await _flutterLocalNotificationsPlugin.initialize(
         initializationSettings,
         onDidReceiveNotificationResponse: (NotificationResponse details) {
-          _onNotificationTap(details, context);
+          _onNotificationTap(details);
         },
       );
+
+      // Create a default notification channel
+      const AndroidNotificationChannel channel = AndroidNotificationChannel(
+        'high_importance_channel', // id
+        'High Importance Notifications', // title
+        description: 'This channel is used for important notifications.',
+        importance: Importance.high,
+      );
+
+      await _flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(channel);
 
       // Get FCM token
       final String? token = await _firebaseMessaging.getToken();
@@ -84,7 +124,7 @@ class NotificationService {
             'senderId': senderId,
             'senderEmail': senderEmail,
             'type': 'message',
-            'payload': '$senderEmail|$senderId',
+            'payload': '$senderEmail|$senderId|$chatId',
           },
           'android': {
             'priority': 'high',
@@ -159,20 +199,20 @@ class NotificationService {
         message.notification?.title,
         message.notification?.body,
         platformChannelSpecifics,
-        payload: message.data['chatId'],
+        payload: '${message.data['senderEmail']}|${message.data['senderId']}|${message.data['chatId']}',
       );
     }
   }
 
-  void _navigateToChatPage(RemoteMessage message, BuildContext context) {
+  void _navigateToChatPage(RemoteMessage message) {
     // Extract chat details from message data
     final String? chatId = message.data['chatId'];
     final String? senderEmail = message.data['senderEmail'];
     final String? senderId = message.data['senderId'];
 
     if (chatId != null && senderEmail != null && senderId != null) {
-      // Navigate directly to the specific chat screen
-      Navigator.of(context).push(
+      // Navigate directly to the specific chat screen using global navigator key
+      navigatorKey.currentState?.push(
         MaterialPageRoute(
           builder: (context) => Chat(
             reciverEmail: senderEmail, 
@@ -183,19 +223,20 @@ class NotificationService {
     }
   }
 
-  void _onNotificationTap(NotificationResponse details, BuildContext context) {
+  void _onNotificationTap(NotificationResponse details) {
     // Handle notification tap when app is closed or in background
     final String? payload = details.payload;
     
     if (payload != null) {
-      // Extract sender details from payload (you might need to modify how this is stored)
-      // This is a simplified example and might need adjustment based on your exact data structure
+      // Extract sender details from payload
       final parts = payload.split('|');
-      if (parts.length >= 2) {
+      if (parts.length >= 3) {
         final String senderEmail = parts[0];
         final String senderId = parts[1];
+        final String chatId = parts[2];
 
-        Navigator.of(context).push(
+        // Navigate using global navigator key
+        navigatorKey.currentState?.push(
           MaterialPageRoute(
             builder: (context) => Chat(
               reciverEmail: senderEmail, 
