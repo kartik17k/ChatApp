@@ -6,12 +6,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../components/chatloder.dart';
 import '../theme/colors.dart';
+import '../services/auth/authgate.dart'; // Import AuthGate instead of SplashScreen
 
 class Chat extends StatefulWidget {
   final String reciverEmail;
   final String reciverID;
+  final bool allowBack; // New parameter to control back navigation
 
-  Chat({super.key, required this.reciverEmail, required this.reciverID});
+  const Chat({
+    super.key, 
+    required this.reciverEmail, 
+    required this.reciverID,
+    this.allowBack = false // Default to not allowing back
+  });
 
   @override
   State<Chat> createState() => _ChatState();
@@ -23,8 +30,6 @@ class _ChatState extends State<Chat> {
   final AuthService authService = AuthService();
   final FocusNode myFocusNode = FocusNode();
   final ScrollController scrollController = ScrollController();
-
-
 
   @override
   void initState() {
@@ -55,6 +60,20 @@ class _ChatState extends State<Chat> {
     );
   }
 
+  // New method to handle back navigation
+  void _handleBack() {
+    if (widget.allowBack) {
+      // If back is allowed, simply pop the current route
+      Navigator.of(context).pop();
+    } else {
+      // If back is not allowed, navigate to home screen (AuthGate)
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => AuthGate()), 
+        (route) => false
+      );
+    }
+  }
+
   void sendMessage() async {
     if (messageController.text.isNotEmpty) {
       await chatService.sendMessage(widget.reciverID, messageController.text);
@@ -75,6 +94,10 @@ class _ChatState extends State<Chat> {
         title: Text(
           widget.reciverEmail,
           style: const TextStyle(color: Colors.white),
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: _handleBack, // Use the new back handling method
         ),
         flexibleSpace: Container(
           decoration: BoxDecoration(
