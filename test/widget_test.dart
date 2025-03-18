@@ -7,13 +7,24 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:chat/services/notification/notification_service.dart';
 
 import 'package:chat/main.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+    // Create mock instances for required parameters
+    final analytics = FirebaseAnalytics.instance;
+    final notificationService = NotificationService();
+    final wasLaunchedFromNotification = false;
+
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(MyApp(
+      analytics: analytics,
+      notificationService: notificationService,
+      wasLaunchedFromNotification: wasLaunchedFromNotification,
+    ));
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

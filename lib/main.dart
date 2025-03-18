@@ -1,5 +1,5 @@
 import 'dart:io';
-
+  
 import 'package:chat/firebase_options.dart';
 import 'package:chat/splashScreen.dart';
 import 'package:chat/theme/light.dart';
@@ -17,16 +17,22 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  
+
   // Initialize Firebase Analytics
   FirebaseAnalytics analytics = FirebaseAnalytics.instance;
   
-  // Initialize Notification Service
+  // Initialize notification services
   final notificationService = NotificationService();
+  await notificationService.initNotifications();
   
+  // Setup highlight notification handling
+  notificationService.setupHighlightNotificationHandling();
+
   // Check if app was launched from a notification
   final prefs = await SharedPreferences.getInstance();
   final bool wasLaunchedFromNotification = prefs.getBool('launched_from_notification') ?? false;

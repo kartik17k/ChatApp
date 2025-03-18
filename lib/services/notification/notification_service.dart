@@ -52,6 +52,67 @@ class NotificationService {
   static const String _projectId = 'chat-a9a04'; // Firebase project ID
   static const String _firebaseScope = 'https://www.googleapis.com/auth/firebase.messaging';
 
+  // New method for initializing notifications
+  Future<void> initNotifications() async {
+    print('🔔 Initializing Notifications');
+    
+    // Request notification permissions
+    NotificationSettings settings = await _firebaseMessaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+      provisional: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized || 
+        settings.authorizationStatus == AuthorizationStatus.provisional) {
+      // Get FCM token
+      final String? token = await _firebaseMessaging.getToken();
+      print('🔔 Firebase Messaging Token: $token');
+    } else {
+      print('🚫 Notification permissions not granted');
+    }
+  }
+
+  // New method for setting up highlight notification handling
+  void setupHighlightNotificationHandling() {
+    print('🔔 Setting up Highlight Notification Handling');
+    
+    // Configure how to handle notifications when the app is in the foreground
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('🔔 Received a foreground message');
+      
+      // Check if the message contains a highlight notification
+      if (message.data['type'] == 'highlight') {
+        // Display a local notification
+        _showHighlightNotification(message);
+      }
+    });
+  }
+
+  // Helper method to show highlight notifications
+  void _showHighlightNotification(RemoteMessage message) async {
+    // Create a local notification for highlight messages
+    const AndroidNotificationDetails androidPlatformChannelSpecifics = 
+        AndroidNotificationDetails(
+      'highlight_channel', 
+      'Highlight Notifications',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    
+    const NotificationDetails platformChannelSpecifics = 
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+    
+    await _flutterLocalNotificationsPlugin.show(
+      0, // Notification ID
+      message.notification?.title ?? 'New Highlight', 
+      message.notification?.body ?? 'You have a new highlight', 
+      platformChannelSpecifics,
+      payload: message.data['payload'] ?? '',
+    );
+  }
+
   Future<void> init(BuildContext context) async {
     print('🔔 Initializing Notification Service');
 
