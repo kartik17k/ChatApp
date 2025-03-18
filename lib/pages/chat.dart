@@ -34,6 +34,13 @@ class _ChatState extends State<Chat> {
   @override
   void initState() {
     super.initState();
+    
+    // Mark messages as read when chat is opened
+    List<String> ids = [authService.getCurrentUser()!.uid, widget.reciverID];
+    ids.sort();
+    String chatRoomID = ids.join('_');
+    chatService.markMessagesAsRead(chatRoomID, authService.getCurrentUser()!.uid);
+
     myFocusNode.addListener(() {
       if (myFocusNode.hasFocus) {
         Future.delayed(

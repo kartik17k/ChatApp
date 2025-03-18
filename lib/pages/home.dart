@@ -2,6 +2,7 @@ import 'package:chat/components/drawer.dart';
 import 'package:chat/pages/chat.dart';
 import 'package:chat/services/auth/authService.dart';
 import 'package:chat/services/chat/chatservice.dart';
+import 'package:chat/components/usertile.dart';
 import 'package:flutter/material.dart';
 import '../components/skeletion.dart';
 import '../theme/colors.dart';
@@ -122,7 +123,7 @@ class _HomeState extends State<Home> {
 
   Widget buildUserList() {
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: chat.getUserStream(),
+      stream: chat.getUserStreamWithUnreadCount(),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
@@ -196,90 +197,26 @@ class _HomeState extends State<Home> {
     String username = userData["email"].split('@')[0];
     String capitalizedUsername = username[0].toUpperCase() + username.substring(1);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.08),
-            spreadRadius: 2,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => Chat(
-                  reciverEmail: userData["email"],
-                  reciverID: userData["uid"],
-                ),
+    return StreamBuilder<int>(
+      stream: userData['unreadCountStream'],
+      initialData: 0,
+      builder: (context, unreadSnapshot) {
+        int unreadCount = unreadSnapshot.data ?? 0;
+
+        return UserTile(
+          text: capitalizedUsername,
+          ontap: () => Navigator.push(
+            context, 
+            MaterialPageRoute(
+              builder: (context) => Chat(
+                reciverEmail: userData["email"],
+                reciverID: userData["uid"],
               ),
-            );
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: accentColor,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Center(
-                    child: Text(
-                      capitalizedUsername.substring(0, 1),
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        capitalizedUsername,
-                        style: TextStyle(
-                          color: textColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Tap to start chatting",
-                        style: TextStyle(
-                          color: textColor.withOpacity(0.6),
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: textColor.withOpacity(0.3),
-                ),
-              ],
             ),
           ),
-        ),
-      ),
+          unreadCount: unreadCount,
+        );
+      },
     );
   }
 }

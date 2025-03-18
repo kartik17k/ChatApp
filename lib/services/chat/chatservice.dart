@@ -2,6 +2,7 @@ import 'package:chat/models/message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:chat/services/notification/notification_service.dart';
+import 'dart:async';
 
 class ChatService {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -14,6 +15,36 @@ class ChatService {
         final user = doc.data();
         return user;
       }).toList();
+    });
+  }
+
+  Stream<List<Map<String, dynamic>>> getUserStreamWithUnreadCount() {
+    return firestore.collection("Users").snapshots().map((snapshot) {
+      final currentUserID = auth.currentUser!.uid;
+      List<Map<String, dynamic>> usersWithUnreadCount = [];
+
+      for (var doc in snapshot.docs) {
+        final user = doc.data();
+        List<String> ids = [currentUserID, doc.id];
+        ids.sort();
+        String chatRoomID = ids.join('_');
+
+        // Create a stream for unread messages in this specific chat
+        Stream<int> unreadCountStream = firestore
+            .collection("chat_rooms")
+            .doc(chatRoomID)
+            .collection("messages")
+            .where('receiverID', isEqualTo: currentUserID)
+            .where('read', isEqualTo: false)
+            .snapshots()
+            .map((unreadSnapshot) => unreadSnapshot.size);
+
+        // Attach the unread count stream to the user data
+        user['unreadCountStream'] = unreadCountStream;
+        usersWithUnreadCount.add(user);
+      }
+
+      return usersWithUnreadCount;
     });
   }
 
@@ -97,6 +128,74 @@ class ChatService {
     } catch (e) {
       print(e);
     }
+  }
+
+  Future<void> markMessagesAsRead(String chatRoomID, String currentUserID) async {
+    try {
+      // Get all unread messages in this chat room for the current user
+      QuerySnapshot unreadMessages = await firestore
+          .collection("chat_rooms")
+          .doc(chatRoomID)
+          .collection("messages")
+          .where('receiverID', isEqualTo: currentUserID)
+          .where('read', isEqualTo: false)
+          .get();
+
+      // Batch update to mark all messages as read
+      WriteBatch batch = firestore.batch();
+      for (var doc in unreadMessages.docs) {
+        batch.update(doc.reference, {'read': true});
+      }
+
+      await batch.commit();
+    } catch (e) {
+      print('Error marking messages as read: $e');
+    }
+  }
+
+  Stream<int> getUnreadMessageCount(String currentUserID) {
+    // Create a broadcast stream controller to manage the unread count
+    StreamController<int> unreadCountController = StreamController<int>.broadcast();
+
+    // Track and cancel stream subscriptions
+    List<StreamSubscription> subscriptions = [];
+
+    // Function to calculate total unread count
+    void calculateTotalUnreadCount() {
+      firestore
+          .collection("chat_rooms")
+          .snapshots()
+          .listen((snapshot) {
+        int totalUnreadCount = 0;
+        
+        // Track remaining streams to complete calculation
+        int remainingStreams = snapshot.docs.length;
+
+        for (var chatRoomDoc in snapshot.docs) {
+          firestore
+              .collection("chat_rooms")
+              .doc(chatRoomDoc.id)
+              .collection("messages")
+              .where('receiverID', isEqualTo: currentUserID)
+              .where('read', isEqualTo: false)
+              .snapshots()
+              .listen((unreadSnapshot) {
+                totalUnreadCount += unreadSnapshot.size;
+                remainingStreams--;
+
+                // Add total count to stream when all streams are processed
+                if (remainingStreams == 0) {
+                  unreadCountController.add(totalUnreadCount);
+                }
+              });
+        }
+      });
+    }
+
+    // Start calculating unread count
+    calculateTotalUnreadCount();
+
+    return unreadCountController.stream;
   }
 
   Future<void> deleteUserAccount() async {
