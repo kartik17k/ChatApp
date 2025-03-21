@@ -7,95 +7,203 @@ class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
 
   void logout(BuildContext context) {
-    final authService = AuthService();
-    Navigator.pop(context); // Close drawer before logging out
-    authService.signOut();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Logout',
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to logout?',
+          style: TextStyle(
+            color: textColor,
+            fontSize: 16,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            style: TextButton.styleFrom(
+              foregroundColor: subtleTextColor,
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              final authService = AuthService();
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Close drawer
+              authService.signOut();
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: accentColor,
+            ),
+            child: const Text(
+              'Logout',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        backgroundColor: surfaceColor,
+      ),
+    );
   }
+
   @override
   Widget build(BuildContext context) {
+    final auth = AuthService();
+    final user = auth.getCurrentUser();
+    final email = user?.email ?? '';
+    final username = email.split('@')[0];
+    final displayName = username[0].toUpperCase() + username.substring(1);
+
     return Drawer(
-      backgroundColor: const Color(0xFFFFF9F0), // Cream background color
+      backgroundColor: backgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(32),
+          bottomRight: Radius.circular(32),
+        ),
+      ),
       child: Column(
         children: [
-          // Drawer Header with Icon
-          DrawerHeader(
-            decoration:  BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  primaryColor,
-                  primaryColor.withOpacity(0.8),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+          Container(
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 16,
+              bottom: 16,
             ),
-            child: Center(
-              child: Icon(
-                Icons.message,
-                color: Colors.white, // White icon for contrast
-                size: 80,
-              ),
+            decoration: BoxDecoration(
+              color: backgroundColor,
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      displayName[0],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  displayName,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
-
-          // Menu items
-          ListTile(
-            title: const Text(
-              "Home",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: Color(0xFF4E342E), // Dark brown for text
-              ),
-            ),
-            leading: const Icon(Icons.home, size: 28, color: Color(0xFF4E342E)),
-            onTap: () {
-              Navigator.pop(context);
-            },
+          const SizedBox(height: 8),
+          _DrawerItem(
+            icon: Icons.home_rounded,
+            title: 'Home',
+            onTap: () => Navigator.pop(context),
+            isActive: true,
           ),
-          ListTile(
-            title: const Text(
-              "Settings",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                color: Color(0xFF4E342E), // Dark brown for text
-              ),
-            ),
-            leading: const Icon(Icons.settings, size: 28, color: Color(0xFF4E342E)),
+          _DrawerItem(
+            icon: Icons.settings_rounded,
+            title: 'Settings',
             onTap: () {
               Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>  Settings(),
+                  builder: (context) => const Settings(),
                 ),
               );
             },
           ),
-          const Spacer(), // Pushes Logout to the bottom
+          const Spacer(),
+          _DrawerItem(
+            icon: Icons.logout_rounded,
+            title: 'Logout',
+            onTap: () => logout(context),
+            isDestructive: true,
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
 
-          // Logout button
-          Padding(
-            padding: const EdgeInsets.only(bottom: 30.0),
-            child: ListTile(
-              title: const Text(
-                "Logout",
+class _DrawerItem extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+  final bool isActive;
+  final bool isDestructive;
+
+  const _DrawerItem({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.isActive = false,
+    this.isDestructive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isDestructive 
+      ? accentColor
+      : isActive 
+        ? primaryColor 
+        : textColor;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 16,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: color,
+                size: 24,
+              ),
+              const SizedBox(width: 16),
+              Text(
+                title,
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.redAccent,
-                  fontSize: 18,
+                  color: color,
+                  fontSize: 16,
+                  fontWeight: isActive 
+                    ? FontWeight.w600 
+                    : FontWeight.w500,
                 ),
               ),
-              leading: const Icon(
-                Icons.logout,
-                size: 28,
-                color: Colors.redAccent,
-              ),
-              onTap: () => logout(context),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

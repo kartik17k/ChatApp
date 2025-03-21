@@ -1,7 +1,6 @@
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:chat/services/auth/authgate.dart';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -20,21 +19,30 @@ class SplashScreen extends StatelessWidget {
               Container(
                 height: screenHeight * 0.3,
                 width: screenWidth * 0.8,
-                child: LottieBuilder.asset(
-                  'images/chat.json',
-                  fit: BoxFit.contain,
+                child: Icon(
+                  Icons.chat_bubble,
+                  size: screenWidth * 0.4,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'RETRO CHAT',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: screenWidth * 0.08,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
         ),
       ),
-      nextScreen: AuthGate(),
+      nextScreen: const AuthGate(),
       splashIconSize: screenWidth * 0.8,
       duration: 3000,
       splashTransition: SplashTransition.fadeTransition,
-      backgroundColor: Color(0xFFF6D9D0), // Solid color or gradient start color
+      backgroundColor: Theme.of(context).primaryColor,
     );
-
   }
 }

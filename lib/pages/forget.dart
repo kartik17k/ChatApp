@@ -1,7 +1,7 @@
-import 'package:chat/components/buttons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../components/textfield.dart';
+import '../theme/colors.dart';
 
 class ForgetPage extends StatefulWidget {
   const ForgetPage({super.key});
@@ -24,104 +24,192 @@ class _ForgetPageState extends State<ForgetPage> {
       await FirebaseAuth.instance.sendPasswordResetEmail(
         email: emailController.text.trim(),
       );
+      if (!mounted) return;
       _showDialog(
-        title: "Success",
-        content: "Email sent successfully.",
-        icon: Icons.check_circle,
-        color: Theme.of(context).colorScheme.primary,
+        title: "Email Sent",
+        content: "Password reset instructions have been sent to your email.",
+        icon: Icons.check_circle_outline,
+        isSuccess: true,
       );
       emailController.clear();
     } on FirebaseAuthException catch (e) {
-      print(e.toString());
+      if (!mounted) return;
       _showDialog(
         title: "Error",
-        content: e.message.toString(),
-        icon: Icons.error,
-        color: Theme.of(context).colorScheme.secondary,
+        content: e.message ?? "An error occurred. Please try again.",
+        icon: Icons.error_outline,
+        isSuccess: false,
       );
-      emailController.clear();
     }
   }
 
-  void _showDialog({required String title, required String content, required IconData icon, required Color color}) {
+  void _showDialog({
+    required String title,
+    required String content,
+    required IconData icon,
+    required bool isSuccess,
+  }) {
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              Icon(icon, color: color),
-              const SizedBox(width: 10),
-              Text(title),
-            ],
-          ),
-          content: Text(content),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text("OK"),
-              style: TextButton.styleFrom(
-                backgroundColor: color,
-                foregroundColor: Colors.white, // Text color
-              ),
+      builder: (context) => AlertDialog(
+        backgroundColor: surfaceColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSuccess ? successColor : errorColor,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              title,
+              style: TextStyle(color: textColor),
             ),
           ],
-        );
-      },
+        ),
+        content: Text(
+          content,
+          style: TextStyle(color: subtleTextColor),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: textColor,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 10,
+              ),
+            ),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back_ios_new,
+            color: textColor,
+            size: 20,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 25),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Enter your email to send the link",
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.primary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Logo and message
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 32),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: surfaceColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.lock_reset_outlined,
+                            size: 48,
+                            color: primaryColor,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          "Reset Password",
+                          style: TextStyle(
+                            color: textColor,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Enter your email to receive instructions",
+                          style: TextStyle(
+                            color: subtleTextColor,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Email input
+                  MyTextField(
+                    hintText: "Email",
+                    labelText: "Email Address",
+                    obscureText: false,
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    prefixIcon: Icon(
+                      Icons.email_outlined,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Send button
+                  ElevatedButton(
+                    onPressed: forgetPassword,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      "Send Reset Link",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Back to login
+                  Center(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        foregroundColor: secondaryColor,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                      ),
+                      child: const Text(
+                        "Back to Sign In",
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 10),
-            MyTextField(
-              hinttext: "Email",
-              obscuretext: false,
-              controller: emailController,
-            ),
-            const SizedBox(height: 10),
-            Buttons(
-              text: "Send",
-              onTap: forgetPassword,
-            ),
-            const SizedBox(height: 20),
-            // Optional: Add a back button or a similar navigation option
-            GestureDetector(
-              onTap: () {
-                Navigator.pop(context); // Go back to the previous page
-              },
-              child: Text(
-                "Back to Login",
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.secondary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

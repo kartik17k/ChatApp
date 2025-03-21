@@ -4,11 +4,12 @@ import 'package:chat/services/auth/authService.dart';
 import 'package:chat/services/chat/chatservice.dart';
 import 'package:chat/components/usertile.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../components/skeletion.dart';
 import '../theme/colors.dart';
 
 class Home extends StatefulWidget {
-  Home({super.key});
+  const Home({super.key});
 
   @override
   _HomeState createState() => _HomeState();
@@ -17,106 +18,99 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final AuthService auth = AuthService();
   final ChatService chat = ChatService();
-  TextEditingController searchController = TextEditingController();
+  final TextEditingController searchController = TextEditingController();
   String searchText = '';
-  bool isLoading = true;
-  //
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: surfaceColor,
         elevation: 0,
-        title: const Text(
+        title: Text(
           "Messages",
           style: TextStyle(
+            color: textColor,
             fontSize: 24,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
-            letterSpacing: 0.5,
           ),
         ),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                primaryColor,
-                primaryColor.withOpacity(0.8),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        centerTitle: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(20),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(Icons.menu_rounded, color: textColor),
+            onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
       ),
-      drawer: MyDrawer(),
-      body: Container(
-        color: backgroundColor,
-        child: Column(
-          children: [
-            buildSearchBar(),
-            const SizedBox(height: 16),
-            Expanded(
-              child: buildUserList(),
-            ),
-          ],
-        ),
+      drawer: const MyDrawer(),
+      body: Column(
+        children: [
+          buildSearchBar(),
+          Expanded(
+            child: buildUserList(),
+          ),
+        ],
       ),
     );
   }
 
   Widget buildSearchBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-      child: TextField(
-        controller: searchController,
-        decoration: InputDecoration(
-          hintText: "Search messages...",
-          hintStyle: TextStyle(
-            color: textColor.withOpacity(0.5),
-            fontSize: 16,
-          ),
-          prefixIcon: Icon(
-            Icons.search_rounded,
-            color: textColor.withOpacity(0.7),
-            size: 22,
-          ),
-          filled: true,
-          fillColor: Colors.white,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: Colors.grey.withOpacity(0.1),
-              width: 1,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      color: surfaceColor,
+      child: Column(
+        children: [
+          TextField(
+            controller: searchController,
+            decoration: InputDecoration(
+              hintText: "Search messages...",
+              hintStyle: TextStyle(
+                color: subtleTextColor,
+                fontSize: 16,
+              ),
+              prefixIcon: Icon(
+                Icons.search_rounded,
+                color: subtleTextColor,
+                size: 22,
+              ),
+              filled: true,
+              fillColor: backgroundColor,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: dividerColor,
+                  width: 1,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(
+                  color: primaryColor.withOpacity(0.5),
+                  width: 2,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
             ),
+            onChanged: (value) {
+              setState(() {
+                searchText = value.toLowerCase();
+              });
+            },
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(
-              color: primaryColor.withOpacity(0.5),
-              width: 2,
-            ),
+          Container(
+            height: 1,
+            margin: const EdgeInsets.only(top: 8),
+            color: dividerColor,
           ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 16,
-          ),
-        ),
-        onChanged: (value) {
-          setState(() {
-            searchText = value.toLowerCase();
-          });
-        },
+        ],
       ),
     );
   }
@@ -127,12 +121,38 @@ class _HomeState extends State<Home> {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
-            child: Text(
-              "Something went wrong",
-              style: TextStyle(
-                color: textColor,
-                fontSize: 16,
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 48,
+                  color: accentColor,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "Something went wrong",
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {});
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: primaryColor,
+                  ),
+                  child: const Text(
+                    "Try Again",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         }
@@ -148,7 +168,7 @@ class _HomeState extends State<Home> {
 
         if (snapshot.hasData) {
           final filteredUsers = snapshot.data!.where((userData) {
-            final userEmail = userData["email"].toLowerCase();
+            final userEmail = userData["user"]?["email"]?.toLowerCase() ?? '';
             return userEmail.contains(searchText) &&
                 userEmail != auth.getCurrentUser()!.email;
           }).toList();
@@ -159,17 +179,29 @@ class _HomeState extends State<Home> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.search_off_rounded,
+                    searchText.isEmpty ? Icons.chat_bubble_outline_rounded : Icons.search_off_rounded,
                     size: 48,
-                    color: textColor.withOpacity(0.5),
+                    color: subtleTextColor,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    "No users found",
+                    searchText.isEmpty 
+                      ? "Start a conversation" 
+                      : "No users found",
                     style: TextStyle(
-                      color: textColor.withOpacity(0.7),
+                      color: textColor,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    searchText.isEmpty 
+                      ? "Connect with others and start chatting"
+                      : "Try a different search",
+                    style: TextStyle(
+                      color: subtleTextColor,
+                      fontSize: 14,
                     ),
                   ),
                 ],
@@ -177,46 +209,94 @@ class _HomeState extends State<Home> {
             );
           }
 
-          return ListView.separated(
+          return ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             itemCount: filteredUsers.length,
             itemBuilder: (context, index) {
-              final userData = filteredUsers[index];
-              return buildUserListItem(userData, context);
+              final data = filteredUsers[index];
+              final user = data['user'] as Map<String, dynamic>? ?? {};
+              final lastMessage = data['lastMessage'] as Map<String, dynamic>? ?? {};
+              final currentUserId = auth.getCurrentUser()!.uid;
+              
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6.0),
+                child: UserTile(
+                  text: user['email'] ?? 'Unknown User',
+                  ontap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => Chat(
+                          reciverID: user['uid'] ?? '',
+                          reciverEmail: user['email'] ?? 'Unknown User',
+                        ),
+                      ),
+                    );
+                  },
+                  userId: user['uid'] ?? '',
+                  currentUserId: currentUserId,
+                  unreadCount: data['unreadCount'] ?? 0,
+                  lastMessage: lastMessage['text'] ?? '',
+                  lastMessageTime: lastMessage['timestamp'] != null
+                      ? DateTime.fromMillisecondsSinceEpoch(
+                          lastMessage['timestamp'] as int,
+                        )
+                      : null,
+                  isOwnMessage: user['uid'] == currentUserId,
+                ),
+              );
             },
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
           );
         }
 
-        return const Center(child: Text("No users available"));
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline_rounded,
+                size: 48,
+                color: subtleTextColor,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                "No users available",
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        );
       },
     );
   }
 
   Widget buildUserListItem(Map<String, dynamic> userData, BuildContext context) {
-    String username = userData["email"].split('@')[0];
-    String capitalizedUsername = username[0].toUpperCase() + username.substring(1);
-
-    return StreamBuilder<int>(
-      stream: userData['unreadCountStream'],
-      initialData: 0,
-      builder: (context, unreadSnapshot) {
-        int unreadCount = unreadSnapshot.data ?? 0;
-
-        return UserTile(
-          text: capitalizedUsername,
-          ontap: () => Navigator.push(
-            context, 
-            MaterialPageRoute(
-              builder: (context) => Chat(
-                reciverEmail: userData["email"],
-                reciverID: userData["uid"],
-              ),
+    String username = userData["user"]?["email"]?.split('@')?.first ?? 'Unknown User';
+    final currentUserId = auth.getCurrentUser()!.uid;
+    
+    return UserTile(
+      text: userData["user"]?["email"] ?? 'Unknown User',
+      ontap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Chat(
+              reciverID: userData["user"]?["uid"] ?? '',
+              reciverEmail: userData["user"]?["email"] ?? 'Unknown User',
             ),
           ),
-          unreadCount: unreadCount,
         );
       },
+      userId: userData["user"]?["uid"] ?? '',
+      currentUserId: currentUserId,
+      unreadCount: 0,
+      lastMessage: '',
+      lastMessageTime: null,
+      isOwnMessage: userData["user"]?["uid"] == currentUserId,
     );
   }
 }

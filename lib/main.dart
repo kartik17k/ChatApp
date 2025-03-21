@@ -2,11 +2,10 @@ import 'dart:io';
   
 import 'package:chat/firebase_options.dart';
 import 'package:chat/splashScreen.dart';
-import 'package:chat/theme/light.dart';
-import 'package:device_preview/device_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
+
 import 'package:chat/services/notification/notification_service.dart';
 import 'package:chat/services/auth/authgate.dart';
 import 'package:chat/pages/chat.dart';
@@ -41,14 +40,13 @@ void main() async {
   await prefs.remove('launched_from_notification');
   
   runApp(
-    DevicePreview(
-      enabled: false,
-      builder: (context) => MyApp(
+
+        MyApp(
         analytics: analytics, 
         notificationService: notificationService,
         wasLaunchedFromNotification: wasLaunchedFromNotification,
       ),
-    )
+
   );
 }
 
@@ -93,7 +91,6 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       navigatorKey: navigatorKey, 
       home: initialRoute,
-      theme: creamTheme,
       navigatorObservers: [
         FirebaseAnalyticsObserver(analytics: widget.analytics),
       ],

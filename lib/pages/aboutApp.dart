@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../theme/colors.dart';
 
 class AboutApp extends StatelessWidget {
@@ -8,72 +7,140 @@ class AboutApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Text(
-          "About App",
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.transparent,
-        centerTitle: true,
+        backgroundColor: surfaceColor,
         elevation: 0,
-        flexibleSpace: Container(
-          decoration:  BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                primaryColor,
-                primaryColor.withOpacity(0.8),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+        title: Text(
+          "About App",
+          style: TextStyle(
+            color: textColor,
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
           ),
         ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: textColor),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: const Color(0xFFF77F64), // Coral color for consistency
-                  ),
-                  padding: const EdgeInsets.all(25),
-                  margin: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        "Embarking on the digital realm's burgeoning frontier of communication, our bespoke chat application stands as an "
-                            "epitome of technological sophistication, seamlessly melding the prowess of Flutter's versatile framework with "
-                            "the dynamic capabilities of Firebase Firestore and Firebase Authentication. Crafted with meticulous attention "
-                            "to detail, our application emerges as a paragon of modernity, offering an intuitive user interface "
-                            "characterized by fluidity and elegance. Within this digital sanctuary, users are beckoned to partake in a "
-                            "tapestry of dialogues, woven with the threads of real-time data synchronization provided by Firebase "
-                            "Firestore. Securely anchored in the robust embrace of Firebase Authentication, our platform assures users of "
-                            "fortified virtual identities, fostering an environment conducive to trust and authenticity. As users traverse "
-                            "this digital landscape, they are enveloped in a symphony of features, from nuanced message delivery status "
-                            "indicators to the harmonious orchestration of push notifications. Moreover, our app provides a veritable "
-                            "cornucopia of customizable profiles, each a canvas upon which users can paint the rich tapestry of their "
-                            "digital persona. Whether engaged in tête-à-têtes of intimate discourse or navigating the convivial waters of "
-                            "group conversations, our chat app stands as a beacon of reliability and responsiveness, forging bonds that "
-                            "transcend the limitations of time and space.",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.white, // Dark brown text for consistency
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              color: surfaceColor,
+              child: Column(
+                children: [
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: primaryColor,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
-                        textAlign: TextAlign.justify,
+                      ],
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.chat_bubble_rounded,
+                        color: Colors.white,
+                        size: 64,
                       ),
-                    ],
+                    ),
                   ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "Social Chat",
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Version 1.0.0",
+                    style: TextStyle(
+                      color: subtleTextColor,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverList(
+            delegate: SliverChildListDelegate(
+              [
+                const SizedBox(height: 32),
+                _buildSection(
+                  title: "Description",
+                  content: "A modern, real-time chat application built with Flutter and Firebase. Connect with friends, send messages, and share media in a beautiful, intuitive interface.",
                 ),
+                const SizedBox(height: 32),
+                _buildSection(
+                  title: "Features",
+                  content: "• Real-time messaging\n• Typing indicators\n• Message delivery status\n• Unread message tracking\n• User profiles\n• Secure authentication\n• Push notifications\n• Modern UI/UX",
+                ),
+                const SizedBox(height: 32),
+                _buildSection(
+                  title: "Technology",
+                  content: "• Flutter\n• Firebase Firestore\n• Firebase Authentication\n• Cloud Functions\n• Cloud Storage",
+                ),
+                const SizedBox(height: 32),
+                _buildSection(
+                  title: "Privacy Policy",
+                  content: "Your privacy is important to us. We do not collect or share any personal information without your explicit consent.",
+                ),
+                const SizedBox(height: 32),
+                _buildSection(
+                  title: "Terms of Service",
+                  content: "By using this application, you agree to our terms of service and privacy policy.",
+                ),
+                const SizedBox(height: 32),
               ],
             ),
           ),
         ],
       ),
-      backgroundColor: const Color(0xFFFFF9F0), // Cream background color for consistency
+    );
+  }
+
+  Widget _buildSection({
+    required String title,
+    required String content,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            content,
+            style: TextStyle(
+              color: textColor,
+              fontSize: 16,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
