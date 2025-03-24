@@ -24,21 +24,21 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: surfaceColor,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         title: Text(
           "Messages",
           style: TextStyle(
-            color: textColor,
+            color: Theme.of(context).appBarTheme.titleTextStyle?.color,
             fontSize: 24,
             fontWeight: FontWeight.w600,
           ),
         ),
         leading: Builder(
           builder: (context) => IconButton(
-            icon: Icon(Icons.menu_rounded, color: textColor),
+            icon: Icon(Icons.menu_rounded, color: Theme.of(context).appBarTheme.iconTheme?.color),
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
@@ -58,7 +58,7 @@ class _HomeState extends State<Home> {
   Widget buildSearchBar() {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      color: surfaceColor,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
           TextField(
@@ -66,33 +66,27 @@ class _HomeState extends State<Home> {
             decoration: InputDecoration(
               hintText: "Search messages...",
               hintStyle: TextStyle(
-                color: subtleTextColor,
+                color: Theme.of(context).hintColor,
                 fontSize: 16,
               ),
               prefixIcon: Icon(
                 Icons.search_rounded,
-                color: subtleTextColor,
+                color: Theme.of(context).hintColor,
                 size: 22,
               ),
               filled: true,
-              fillColor: backgroundColor,
+              fillColor: Theme.of(context).cardTheme.color,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(28),
                 borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(
-                  color: dividerColor,
-                  width: 1,
-                ),
+                borderRadius: BorderRadius.circular(28),
+                borderSide: BorderSide.none,
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(
-                  color: primaryColor.withOpacity(0.5),
-                  width: 2,
-                ),
+                borderRadius: BorderRadius.circular(28),
+                borderSide: BorderSide.none,
               ),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 20,
@@ -105,11 +99,6 @@ class _HomeState extends State<Home> {
               });
             },
           ),
-          Container(
-            height: 1,
-            margin: const EdgeInsets.only(top: 8),
-            color: dividerColor,
-          ),
         ],
       ),
     );
@@ -121,38 +110,41 @@ class _HomeState extends State<Home> {
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline_rounded,
-                  size: 48,
-                  color: accentColor,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  "Something went wrong",
-                  style: TextStyle(
-                    color: textColor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline_rounded,
+                    size: 48,
+                    color: Theme.of(context).colorScheme.error,
                   ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    setState(() {});
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: primaryColor,
-                  ),
-                  child: const Text(
-                    "Try Again",
+                  const SizedBox(height: 12),
+                  Text(
+                    "Something went wrong",
                     style: TextStyle(
-                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).textTheme.titleMedium?.color,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                ),
-              ],
+                  TextButton(
+                    onPressed: () {
+                      setState(() {});
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.primary,
+                    ),
+                    child: const Text(
+                      "Try Again",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }
@@ -175,99 +167,112 @@ class _HomeState extends State<Home> {
 
           if (filteredUsers.isEmpty) {
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    searchText.isEmpty ? Icons.chat_bubble_outline_rounded : Icons.search_off_rounded,
-                    size: 48,
-                    color: subtleTextColor,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    searchText.isEmpty 
-                      ? "Start a conversation" 
-                      : "No users found",
-                    style: TextStyle(
-                      color: textColor,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      searchText.isEmpty ? Icons.chat_bubble_outline_rounded : Icons.search_off_rounded,
+                      size: 48,
+                      color: Theme.of(context).hintColor,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    searchText.isEmpty 
-                      ? "Connect with others and start chatting"
-                      : "Try a different search",
-                    style: TextStyle(
-                      color: subtleTextColor,
-                      fontSize: 14,
+                    const SizedBox(height: 16),
+                    Text(
+                      searchText.isEmpty 
+                        ? "Start a conversation" 
+                        : "No users found",
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.titleMedium?.color,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      searchText.isEmpty 
+                        ? "Connect with others and start chatting"
+                        : "Try a different search",
+                      style: TextStyle(
+                        color: Theme.of(context).hintColor,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           }
 
-          return ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            itemCount: filteredUsers.length,
-            itemBuilder: (context, index) {
-              final data = filteredUsers[index];
-              final user = data['user'] as Map<String, dynamic>? ?? {};
-              final lastMessage = data['lastMessage'] as Map<String, dynamic>? ?? {};
-              final currentUserId = auth.getCurrentUser()!.uid;
-              
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6.0),
-                child: UserTile(
-                  text: user['email'] ?? 'Unknown User',
-                  ontap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => Chat(
-                          reciverID: user['uid'] ?? '',
-                          reciverEmail: user['email'] ?? 'Unknown User',
-                        ),
-                      ),
-                    );
-                  },
-                  userId: user['uid'] ?? '',
-                  currentUserId: currentUserId,
-                  unreadCount: data['unreadCount'] ?? 0,
-                  lastMessage: lastMessage['text'] ?? '',
-                  lastMessageTime: lastMessage['timestamp'] != null
-                      ? DateTime.fromMillisecondsSinceEpoch(
-                          lastMessage['timestamp'] as int,
-                        )
-                      : null,
-                  isOwnMessage: user['uid'] == currentUserId,
-                ),
-              );
-            },
+          return Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                itemCount: filteredUsers.length,
+                itemBuilder: (context, index) {
+                  final data = filteredUsers[index];
+                  final user = data['user'] as Map<String, dynamic>? ?? {};
+                  final lastMessage = data['lastMessage'] as Map<String, dynamic>? ?? {};
+                  final currentUserId = auth.getCurrentUser()!.uid;
+                  
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: UserTile(
+                      text: user['email'] ?? 'Unknown User',
+                      ontap: () async {
+                        // Mark messages as read when opening chat
+                        await ChatService().markMessagesAsRead(user['uid'] ?? '');
+                        
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => Chat(
+                              reciverID: user['uid'] ?? '',
+                              reciverEmail: user['email'] ?? 'Unknown User',
+                            ),
+                          ),
+                        );
+                      },
+                      userId: user['uid'] ?? '',
+                      currentUserId: currentUserId,
+                      unreadCount: data['unreadCount'] ?? 0,
+                      lastMessage: lastMessage['message'] as String?,
+                      lastMessageTime: lastMessage['timestamp'] != null
+                          ? (lastMessage['timestamp'] as Timestamp).toDate()
+                          : null,
+                      isOwnMessage: lastMessage['senderID'] == currentUserId,
+                    ),
+                  );
+                },
+              ),
+            ),
           );
         }
 
         return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline_rounded,
-                size: 48,
-                color: subtleTextColor,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                "No users available",
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline_rounded,
+                  size: 48,
+                  color: Theme.of(context).hintColor,
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                Text(
+                  "No users available",
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.titleMedium?.color,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../theme/colors.dart';
+import '../theme/theme.dart';
 
 class MyTextField extends StatelessWidget {
   final String hintText;
@@ -61,7 +61,7 @@ class MyTextField extends StatelessWidget {
               child: Text(
                 labelText!,
                 style: TextStyle(
-                  color: textColor,
+                  color: Theme.of(context).textTheme.titleMedium?.color,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
@@ -72,27 +72,31 @@ class MyTextField extends StatelessWidget {
             decoration: InputDecoration(
               hintText: hintText,
               hintStyle: TextStyle(
-                color: subtleTextColor,
+                color: Theme.of(context).hintColor,
                 fontSize: 15,
               ),
               errorText: errorText,
               errorStyle: TextStyle(
-                color: errorColor,
+                color: Theme.of(context).colorScheme.error,
                 fontSize: 12,
               ),
               helperText: helperText,
               helperStyle: TextStyle(
-                color: subtleTextColor,
+                color: Theme.of(context).hintColor,
                 fontSize: 12,
               ),
               helperMaxLines: 2,
               errorMaxLines: 2,
               filled: true,
-              fillColor: enabled! ? surfaceColor : backgroundColor,
+              fillColor: enabled! 
+                ? Theme.of(context).cardTheme.color 
+                : Theme.of(context).cardTheme.color?.withOpacity(0.5),
               prefixIcon: prefixIcon != null
                 ? IconTheme(
                     data: IconThemeData(
-                      color: enabled! ? subtleTextColor : subtleTextColor.withOpacity(0.5),
+                      color: enabled! 
+                        ? Theme.of(context).hintColor 
+                        : Theme.of(context).hintColor.withOpacity(0.5),
                       size: 20,
                     ),
                     child: prefixIcon!,
@@ -101,7 +105,9 @@ class MyTextField extends StatelessWidget {
               suffixIcon: suffixIcon != null
                 ? IconTheme(
                     data: IconThemeData(
-                      color: enabled! ? subtleTextColor : subtleTextColor.withOpacity(0.5),
+                      color: enabled! 
+                        ? Theme.of(context).hintColor 
+                        : Theme.of(context).hintColor.withOpacity(0.5),
                       size: 20,
                     ),
                     child: suffixIcon!,
@@ -114,42 +120,44 @@ class MyTextField extends StatelessWidget {
               counter: !showCounter ? const SizedBox.shrink() : null,
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(
-                  color: dividerColor,
+                  color: Theme.of(context).dividerColor,
                   width: 1,
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
               focusedBorder: OutlineInputBorder(
                 borderSide: BorderSide(
-                  color: primaryColor.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
                   width: 2,
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
               errorBorder: OutlineInputBorder(
                 borderSide: BorderSide(
-                  color: errorColor.withOpacity(0.7),
+                  color: Theme.of(context).colorScheme.error.withOpacity(0.7),
                   width: 1,
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
               focusedErrorBorder: OutlineInputBorder(
                 borderSide: BorderSide(
-                  color: errorColor,
+                  color: Theme.of(context).colorScheme.error,
                   width: 2,
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
               disabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(
-                  color: dividerColor.withOpacity(0.5),
+                  color: Theme.of(context).dividerColor.withOpacity(0.5),
                   width: 1,
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
             style: TextStyle(
-              color: enabled! ? textColor : textColor.withOpacity(0.7),
+              color: enabled! 
+                ? Theme.of(context).textTheme.bodySmall?.color 
+                : Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
               fontSize: 15,
             ),
             obscureText: obscureText,
@@ -164,7 +172,7 @@ class MyTextField extends StatelessWidget {
             onChanged: onChanged,
             onSubmitted: onSubmitted,
             autofocus: autofocus,
-            cursorColor: primaryColor,
+            cursorColor: Theme.of(context).colorScheme.primary,
             cursorWidth: 2,
             cursorRadius: const Radius.circular(4),
           ),

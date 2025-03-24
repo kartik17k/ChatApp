@@ -3,6 +3,7 @@ import '../components/buttons.dart';
 import '../components/textfield.dart';
 import '../services/auth/authService.dart';
 import '../theme/colors.dart';
+import '../theme/theme.dart';
 import 'forget.dart';
 
 class Login extends StatelessWidget {
@@ -23,29 +24,29 @@ class Login extends StatelessWidget {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: surfaceColor,
+          backgroundColor: Theme.of(context).cardTheme.color,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           title: Row(
             children: [
-              Icon(Icons.error_outline, color: errorColor),
+              Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
               const SizedBox(width: 12),
               Text(
                 "Error",
-                style: TextStyle(color: textColor),
+                style: TextStyle(color: Theme.of(context).textTheme.titleMedium?.color),
               ),
             ],
           ),
           content: Text(
             e.toString(),
-            style: TextStyle(color: subtleTextColor),
+            style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               style: TextButton.styleFrom(
-                foregroundColor: textColor,
+                foregroundColor: Theme.of(context).textTheme.bodySmall?.color,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 10,
@@ -62,7 +63,7 @@ class Login extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -80,20 +81,20 @@ class Login extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: surfaceColor,
+                            color: Theme.of(context).cardTheme.color,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             Icons.chat_bubble_outline_rounded,
                             size: 48,
-                            color: primaryColor,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 24),
                         Text(
                           "Welcome Back",
                           style: TextStyle(
-                            color: textColor,
+                            color: Theme.of(context).textTheme.titleMedium?.color,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
@@ -102,7 +103,7 @@ class Login extends StatelessWidget {
                         Text(
                           "We're glad to see you again",
                           style: TextStyle(
-                            color: subtleTextColor,
+                            color: Theme.of(context).textTheme.bodySmall?.color,
                             fontSize: 16,
                           ),
                         ),
@@ -120,7 +121,7 @@ class Login extends StatelessWidget {
                     keyboardType: TextInputType.emailAddress,
                     prefixIcon: Icon(
                       Icons.email_outlined,
-                      color: textColor,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -133,7 +134,7 @@ class Login extends StatelessWidget {
                     controller: passwordController,
                     prefixIcon: Icon(
                       Icons.lock_outline_rounded,
-                      color: textColor,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                     ),
                   ),
 
@@ -148,7 +149,7 @@ class Login extends StatelessWidget {
                         );
                       },
                       style: TextButton.styleFrom(
-                        foregroundColor: secondaryColor,
+                        foregroundColor: Theme.of(context).colorScheme.secondary,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 12,
@@ -163,7 +164,7 @@ class Login extends StatelessWidget {
                   ElevatedButton(
                     onPressed: () => login(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
@@ -186,14 +187,14 @@ class Login extends StatelessWidget {
                     children: [
                       Text(
                         "Don't have an account? ",
-                        style: TextStyle(color: subtleTextColor),
+                        style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
                       ),
                       GestureDetector(
                         onTap: onTap,
                         child: Text(
                           "Sign Up",
                           style: TextStyle(
-                            color: secondaryColor,
+                            color: Theme.of(context).colorScheme.secondary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

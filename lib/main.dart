@@ -5,11 +5,13 @@ import 'package:chat/splashScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
-
 import 'package:chat/services/notification/notification_service.dart';
 import 'package:chat/services/auth/authgate.dart';
 import 'package:chat/pages/chat.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:chat/theme/theme.dart';
+import 'package:chat/services/theme/theme_service.dart';
 
 // Global navigation key
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -29,8 +31,8 @@ void main() async {
   final notificationService = NotificationService();
   await notificationService.initNotifications();
   
-  // Setup highlight notification handling
-  notificationService.setupHighlightNotificationHandling();
+  // Initialize theme service
+  final themeService = ThemeService();
 
   // Check if app was launched from a notification
   final prefs = await SharedPreferences.getInstance();
@@ -40,13 +42,18 @@ void main() async {
   await prefs.remove('launched_from_notification');
   
   runApp(
-
-        MyApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider<ThemeService>(
+          create: (context) => themeService,
+        ),
+      ],
+      child: MyApp(
         analytics: analytics, 
         notificationService: notificationService,
         wasLaunchedFromNotification: wasLaunchedFromNotification,
       ),
-
+    ),
   );
 }
 
@@ -54,22 +61,24 @@ class MyApp extends StatefulWidget {
   final FirebaseAnalytics analytics;
   final NotificationService notificationService;
   final bool wasLaunchedFromNotification;
-  
+
   const MyApp({
-    super.key, 
-    required this.analytics, 
+    Key? key,
+    required this.analytics,
     required this.notificationService,
     required this.wasLaunchedFromNotification,
-  });
+  }) : super(key: key);
 
   @override
-  _MyAppState createState() => _MyAppState();
+  State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    final themeService = Provider.of<ThemeService>(context, listen: false);
+    themeService.getThemeMode();
     
     // Initialize notification service with context
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -87,13 +96,20 @@ class _MyAppState extends State<MyApp> {
       ? _buildNotificationLaunchRoute() 
       : const SplashScreen();
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      navigatorKey: navigatorKey, 
-      home: initialRoute,
-      navigatorObservers: [
-        FirebaseAnalyticsObserver(analytics: widget.analytics),
-      ],
+    return Consumer<ThemeService>(
+      builder: (context, themeService, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          navigatorKey: navigatorKey, 
+          home: initialRoute,
+          navigatorObservers: [
+            FirebaseAnalyticsObserver(analytics: widget.analytics),
+          ],
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: themeService.themeNotifier.value,
+        );
+      },
     );
   }
 

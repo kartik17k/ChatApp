@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../components/textfield.dart';
-import '../theme/colors.dart';
+import '../theme/theme.dart';
 
 class ForgetPage extends StatefulWidget {
   const ForgetPage({super.key});
@@ -52,7 +52,7 @@ class _ForgetPageState extends State<ForgetPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: surfaceColor,
+        backgroundColor: Theme.of(context).cardTheme.color,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -60,24 +60,28 @@ class _ForgetPageState extends State<ForgetPage> {
           children: [
             Icon(
               icon,
-              color: isSuccess ? successColor : errorColor,
+              color: isSuccess ? Colors.green : Theme.of(context).colorScheme.error,
             ),
             const SizedBox(width: 12),
             Text(
               title,
-              style: TextStyle(color: textColor),
+              style: TextStyle(
+                color: Theme.of(context).textTheme.titleMedium?.color,
+              ),
             ),
           ],
         ),
         content: Text(
           content,
-          style: TextStyle(color: subtleTextColor),
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodySmall?.color,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             style: TextButton.styleFrom(
-              foregroundColor: textColor,
+              foregroundColor: Theme.of(context).textTheme.bodySmall?.color,
               padding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 10,
@@ -93,123 +97,96 @@ class _ForgetPageState extends State<ForgetPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
-            Icons.arrow_back_ios_new,
-            color: textColor,
-            size: 20,
+            Icons.arrow_back_ios_new_rounded,
+            color: Theme.of(context).appBarTheme.iconTheme?.color,
           ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Logo and message
-                  Container(
-                    padding: const EdgeInsets.symmetric(vertical: 32),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: surfaceColor,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.lock_reset_outlined,
-                            size: 48,
-                            color: primaryColor,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          "Reset Password",
-                          style: TextStyle(
-                            color: textColor,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Enter your email to receive instructions",
-                          style: TextStyle(
-                            color: subtleTextColor,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Email input
-                  MyTextField(
-                    hintText: "Email",
-                    labelText: "Email Address",
-                    obscureText: false,
-                    controller: emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    prefixIcon: Icon(
-                      Icons.email_outlined,
-                      color: textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Send button
-                  ElevatedButton(
-                    onPressed: forgetPassword,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      "Send Reset Link",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Back to login
-                  Center(
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: TextButton.styleFrom(
-                        foregroundColor: secondaryColor,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                      ),
-                      child: const Text(
-                        "Back to Sign In",
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ),
-                ],
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardTheme.color,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.lock_reset,
+                size: 48,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
-          ),
+            const SizedBox(height: 24),
+            Text(
+              "Reset Password",
+              style: TextStyle(
+                color: Theme.of(context).textTheme.titleMedium?.color,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Enter your email to receive password reset instructions",
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodySmall?.color,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 32),
+            MyTextField(
+              controller: emailController,
+              hintText: "Email",
+              labelText: "Email Address",
+              obscureText: false,
+              keyboardType: TextInputType.emailAddress,
+              prefixIcon: Icon(
+                Icons.email_outlined,
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: forgetPassword,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text("Send Reset Link"),
+            ),
+            const SizedBox(height: 24),
+            Center(
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.secondary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                ),
+                child: const Text(
+                  "Back to Sign In",
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

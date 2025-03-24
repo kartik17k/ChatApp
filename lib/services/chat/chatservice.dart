@@ -1,14 +1,16 @@
+import 'dart:ui';
 import 'package:chat/models/message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:chat/services/notification/notification_service.dart';
 import 'dart:async';
+import 'package:async/async.dart';
+import 'package:rxdart/rxdart.dart';
 
 class ChatService {
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
   final FirebaseAuth auth = FirebaseAuth.instance;
   final NotificationService _notificationService = NotificationService();
-  final Map<String, Timer> _typingTimers = {};
 
   Stream<List<Map<String, dynamic>>> getUserStream() {
     return firestore.collection("Users").snapshots().map((snapshot) {
@@ -22,13 +24,9 @@ class ChatService {
   Stream<List<Map<String, dynamic>>> getUserStreamWithUnreadCount() {
     final currentUserID = auth.currentUser!.uid;
     
-    return firestore.collection("Users").snapshots().map((snapshot) {
-      List<Map<String, dynamic>> usersWithUnreadCount = [];
-
-      for (var doc in snapshot.docs) {
-        // Skip current user
-        if (doc.id == currentUserID) continue;
-        
+    return firestore.collection("Users").snapshots().flatMap((userSnapshot) {
+      // Create a stream for each user that combines user data with their chat info
+      final userStreams = userSnapshot.docs.where((doc) => doc.id != currentUserID).map((doc) {
         final user = {
           'email': doc.data()?['email'] ?? 'Unknown User',
           'uid': doc.id
@@ -39,14 +37,49 @@ class ChatService {
         ids.sort();
         String chatRoomID = ids.join('_');
         
-        usersWithUnreadCount.add({
-          'user': user,
-          'unreadCount': 0,
-          'lastMessage': null,
-        });
-      }
-
-      return usersWithUnreadCount;
+        // Create a stream that combines last message and unread count
+        return firestore
+            .collection("chat_rooms")
+            .doc(chatRoomID)
+            .collection("messages")
+            .orderBy("timestamp", descending: true)
+            .limit(1)
+            .snapshots()
+            .flatMap((messageSnapshot) {
+              Map<String, dynamic>? lastMessage;
+              
+              if (messageSnapshot.docs.isNotEmpty) {
+                final messageDoc = messageSnapshot.docs.first;
+                lastMessage = {
+                  'message': messageDoc.data()['message'],
+                  'timestamp': messageDoc.data()['timestamp'],
+                  'senderID': messageDoc.data()['senderID'],
+                  'messageType': messageDoc.data()['messageType'],
+                  'read': messageDoc.data()['read'],
+                };
+              }
+              
+              // Get unread count stream
+              return firestore
+                  .collection("chat_rooms")
+                  .doc(chatRoomID)
+                  .collection("messages")
+                  .where("receiverID", isEqualTo: currentUserID)
+                  .where("read", isEqualTo: false)
+                  .snapshots()
+                  .map((unreadSnapshot) {
+                    return {
+                      'user': user,
+                      'unreadCount': unreadSnapshot.docs.length,
+                      'lastMessage': lastMessage,
+                      'chatRoomID': chatRoomID,
+                    };
+                  });
+            });
+      }).toList();
+      
+      // Combine all user streams into a single stream
+      return Rx.combineLatest(userStreams, (List<Map<String, dynamic>> updates) => updates);
     });
   }
 
@@ -198,33 +231,29 @@ class ChatService {
     }
   }
 
-  Future<void> markMessagesAsRead(String chatRoomID, String currentUserID) async {
-    try {
-      QuerySnapshot unreadMessages = await firestore
-          .collection("chat_rooms")
-          .doc(chatRoomID)
-          .collection("messages")
-          .where('receiverID', isEqualTo: currentUserID)
-          .where('read', isEqualTo: false)
-          .get();
+  Future<void> markMessagesAsRead(String otherUserId) async {
+    final currentUserID = auth.currentUser!.uid;
+    List<String> ids = [currentUserID, otherUserId];
+    ids.sort();
+    String chatRoomID = ids.join('_');
 
-      WriteBatch batch = firestore.batch();
-      for (var doc in unreadMessages.docs) {
-        batch.update(doc.reference, {'read': true});
-      }
+    // Get all unread messages
+    final unreadMessages = await firestore
+        .collection("chat_rooms")
+        .doc(chatRoomID)
+        .collection("messages")
+        .where("receiverID", isEqualTo: currentUserID)
+        .where("read", isEqualTo: false)
+        .get();
 
-      await batch.commit();
-
-      // Reset unread count
-      await firestore
-          .collection('chat_rooms')
-          .doc(chatRoomID)
-          .set({
-            'unreadCount.${currentUserID}': 0,
-          }, SetOptions(merge: true));
-    } catch (e) {
-      print('Error marking messages as read: $e');
+    // Create a batch to update all messages at once
+    final batch = firestore.batch();
+    for (var doc in unreadMessages.docs) {
+      batch.update(doc.reference, {'read': true});
     }
+
+    // Commit the batch
+    await batch.commit();
   }
 
   Stream<int> getUnreadMessageCount(String currentUserID) {
@@ -276,22 +305,6 @@ class ChatService {
     };
 
     return unreadCountController.stream;
-  }
-
-  Future<void> setTypingStatus(String chatRoomID, String userID, bool isTyping) async {
-    await firestore
-        .collection('chat_rooms')
-        .doc(chatRoomID)
-        .set({
-          'typing.${userID}': isTyping,
-        }, SetOptions(merge: true));
-  }
-
-  Stream<DocumentSnapshot> getTypingStatusStream(String chatRoomID) {
-    return firestore
-        .collection('chat_rooms')
-        .doc(chatRoomID)
-        .snapshots();
   }
 
   Future<void> clearChat(String userID, String otherUserID) async {

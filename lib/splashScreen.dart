@@ -27,7 +27,7 @@ class SplashScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               Text(
-                'RETRO CHAT',
+                'CHAT',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: screenWidth * 0.08,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/colors.dart';
+import '../theme/theme.dart';
 
 class SkeletonLoader extends StatefulWidget {
   final double height;
@@ -67,9 +67,9 @@ class _SkeletonLoaderState extends State<SkeletonLoader> with SingleTickerProvid
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                surfaceColor,
-                surfaceColor.withOpacity(0.5),
-                surfaceColor,
+                Theme.of(context).cardTheme.color!,
+                Theme.of(context).cardTheme.color!.withOpacity(0.5),
+                Theme.of(context).cardTheme.color!,
               ],
               stops: [
                 0,
@@ -99,11 +99,11 @@ class UserTileSkeleton extends StatelessWidget {
       padding: padding!,
       child: Container(
         decoration: BoxDecoration(
-          color: surfaceColor,
+          color: Theme.of(context).cardTheme.color,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Theme.of(context).shadowColor.withOpacity(0.1),
               blurRadius: 5,
               offset: const Offset(0, 2),
             ),

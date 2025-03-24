@@ -1,7 +1,7 @@
 import 'package:chat/pages/settings.dart';
 import 'package:flutter/material.dart';
 import '../services/auth/authService.dart';
-import '../theme/colors.dart';
+import '../theme/theme.dart';
 
 class MyDrawer extends StatelessWidget {
   const MyDrawer({super.key});
@@ -13,14 +13,14 @@ class MyDrawer extends StatelessWidget {
         title: Text(
           'Logout',
           style: TextStyle(
-            color: textColor,
+            color: Theme.of(context).textTheme.titleMedium?.color,
             fontWeight: FontWeight.w600,
           ),
         ),
         content: Text(
           'Are you sure you want to logout?',
           style: TextStyle(
-            color: textColor,
+            color: Theme.of(context).textTheme.bodySmall?.color,
             fontSize: 16,
           ),
         ),
@@ -28,7 +28,7 @@ class MyDrawer extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context),
             style: TextButton.styleFrom(
-              foregroundColor: subtleTextColor,
+              foregroundColor: Theme.of(context).textTheme.bodySmall?.color,
             ),
             child: const Text(
               'Cancel',
@@ -43,7 +43,7 @@ class MyDrawer extends StatelessWidget {
               authService.signOut();
             },
             style: TextButton.styleFrom(
-              foregroundColor: accentColor,
+              foregroundColor: Theme.of(context).colorScheme.error,
             ),
             child: const Text(
               'Logout',
@@ -54,7 +54,7 @@ class MyDrawer extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        backgroundColor: surfaceColor,
+        backgroundColor: Theme.of(context).cardTheme.color,
       ),
     );
   }
@@ -68,7 +68,7 @@ class MyDrawer extends StatelessWidget {
     final displayName = username[0].toUpperCase() + username.substring(1);
 
     return Drawer(
-      backgroundColor: backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.only(
           topRight: Radius.circular(32),
@@ -83,7 +83,7 @@ class MyDrawer extends StatelessWidget {
               bottom: 16,
             ),
             decoration: BoxDecoration(
-              color: backgroundColor,
+              color: Theme.of(context).scaffoldBackgroundColor,
             ),
             child: Column(
               children: [
@@ -91,7 +91,7 @@ class MyDrawer extends StatelessWidget {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: primaryColor,
+                    color: Theme.of(context).colorScheme.primary,
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -109,7 +109,7 @@ class MyDrawer extends StatelessWidget {
                 Text(
                   displayName,
                   style: TextStyle(
-                    color: textColor,
+                    color: Theme.of(context).textTheme.titleMedium?.color,
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
                   ),
@@ -169,10 +169,10 @@ class _DrawerItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isDestructive 
-      ? accentColor
+      ? Theme.of(context).colorScheme.error
       : isActive 
-        ? primaryColor 
-        : textColor;
+        ? Theme.of(context).colorScheme.primary 
+        : Theme.of(context).textTheme.bodySmall?.color;
 
     return Material(
       color: Colors.transparent,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../components/textfield.dart';
 import '../services/auth/authService.dart';
-import '../theme/colors.dart';
+import '../theme/theme.dart';
 
 class Register extends StatefulWidget {
   final void Function()? onTap;
@@ -25,7 +25,7 @@ class _RegisterState extends State<Register> {
         title: "Password Mismatch",
         message: "The passwords you entered don't match. Please try again.",
         icon: Icons.warning_amber_rounded,
-        color: warningColor,
+        color: Colors.amber,
       );
       return;
     }
@@ -35,7 +35,7 @@ class _RegisterState extends State<Register> {
         title: "Password Too Short",
         message: "Password must be at least 6 characters long.",
         icon: Icons.error_outline,
-        color: errorColor,
+        color: Theme.of(context).colorScheme.error,
       );
       return;
     }
@@ -45,7 +45,7 @@ class _RegisterState extends State<Register> {
         title: "Invalid Email",
         message: "Please enter a valid email address.",
         icon: Icons.error_outline,
-        color: errorColor,
+        color: Theme.of(context).colorScheme.error,
       );
       return;
     }
@@ -61,7 +61,7 @@ class _RegisterState extends State<Register> {
         title: "Registration Failed",
         message: e.toString(),
         icon: Icons.error_outline,
-        color: errorColor,
+        color: Theme.of(context).colorScheme.error,
       );
     } finally {
       if (mounted) {
@@ -79,7 +79,7 @@ class _RegisterState extends State<Register> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: surfaceColor,
+        backgroundColor: Theme.of(context).cardTheme.color,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -90,7 +90,7 @@ class _RegisterState extends State<Register> {
             Text(
               title,
               style: TextStyle(
-                color: textColor,
+                color: Theme.of(context).textTheme.titleMedium?.color,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -99,14 +99,14 @@ class _RegisterState extends State<Register> {
         content: Text(
           message,
           style: TextStyle(
-            color: textColor,
+            color: Theme.of(context).textTheme.bodySmall?.color,
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             style: TextButton.styleFrom(
-              foregroundColor: textColor,
+              foregroundColor: Theme.of(context).textTheme.bodySmall?.color,
               padding: const EdgeInsets.symmetric(
                 horizontal: 16,
                 vertical: 10,
@@ -120,17 +120,9 @@ class _RegisterState extends State<Register> {
   }
 
   @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    confirmPasswordController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -140,47 +132,37 @@ class _RegisterState extends State<Register> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Logo and welcome message
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 32),
                     child: Column(
                       children: [
                         Container(
-                          width: 120,
-                          height: 120,
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: primaryColor,
+                            color: Theme.of(context).cardTheme.color,
                             shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
                           ),
-                          child: Center(
-                            child: Icon(
-                              Icons.person_add_outlined,
-                              color: Colors.white,
-                              size: 64,
-                            ),
+                          child: Icon(
+                            Icons.person_add_alt_1_outlined,
+                            size: 48,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                         const SizedBox(height: 24),
                         Text(
                           "Create Account",
                           style: TextStyle(
-                            color: textColor,
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.5,
+                            color: Theme.of(context).textTheme.titleMedium?.color,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "Join our community today",
+                          "Join the community",
                           style: TextStyle(
-                            color: subtleTextColor,
+                            color: Theme.of(context).textTheme.bodySmall?.color,
                             fontSize: 16,
                           ),
                         ),
@@ -188,104 +170,74 @@ class _RegisterState extends State<Register> {
                     ),
                   ),
                   const SizedBox(height: 32),
-
                   MyTextField(
-                    hintText: "Email",
-                    labelText: "Email Address",
-                    obscureText: false,
                     controller: emailController,
+                    hintText: "Email",
                     keyboardType: TextInputType.emailAddress,
                     prefixIcon: Icon(
                       Icons.email_outlined,
-                      color: textColor,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                     ),
-                    errorText: _isLoading ? null : null,
-                    helperText: "Enter your email address",
-                    onChanged: (value) {
-                      if (_isLoading) return;
-                      setState(() {});
-                    },
                   ),
                   const SizedBox(height: 16),
-
                   MyTextField(
-                    hintText: "Password",
-                    labelText: "Password",
-                    obscureText: true,
                     controller: passwordController,
+                    hintText: "Password",
+                    obscureText: true,
                     prefixIcon: Icon(
                       Icons.lock_outline_rounded,
-                      color: textColor,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                     ),
-                    errorText: _isLoading ? null : null,
-                    helperText: "Minimum 6 characters",
-                    onChanged: (value) {
-                      if (_isLoading) return;
-                      setState(() {});
-                    },
                   ),
                   const SizedBox(height: 16),
-
                   MyTextField(
-                    hintText: "Confirm Password",
-                    labelText: "Confirm Password",
-                    obscureText: true,
                     controller: confirmPasswordController,
+                    hintText: "Confirm Password",
+                    obscureText: true,
                     prefixIcon: Icon(
                       Icons.lock_outline_rounded,
-                      color: textColor,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                     ),
-                    errorText: _isLoading ? null : null,
-                    helperText: "Re-enter your password",
-                    onChanged: (value) {
-                      if (_isLoading) return;
-                      setState(() {});
-                    },
                   ),
-                  const SizedBox(height: 32),
-
+                  const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _register,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: primaryColor,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                     child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
+                        ? const CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            strokeWidth: 2,
                           )
-                        : const Text(
-                            "Create Account",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                        : const Text("Create Account"),
                   ),
                   const SizedBox(height: 24),
-
-                  TextButton(
-                    onPressed: widget.onTap,
-                    style: TextButton.styleFrom(
-                      foregroundColor: primaryColor,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: const Text(
-                      "Already have an account? Sign in",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Already have an account? ",
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                        ),
                       ),
-                    ),
+                      GestureDetector(
+                        onTap: widget.onTap,
+                        child: Text(
+                          "Sign In",
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.secondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

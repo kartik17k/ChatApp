@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import '../theme/theme.dart';
 
 class ChatBubbleSkeleton extends StatelessWidget {
   final bool isCurrentUser;
 
-  ChatBubbleSkeleton({this.isCurrentUser = true});
+  const ChatBubbleSkeleton({
+    super.key,
+    this.isCurrentUser = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +18,7 @@ class ChatBubbleSkeleton extends StatelessWidget {
         padding: const EdgeInsets.all(15.0),
         width: 150,
         decoration: BoxDecoration(
-          color: Colors.grey[300],
+          color: Theme.of(context).cardTheme.color?.withOpacity(0.1),
           borderRadius: BorderRadius.circular(10),
         ),
       ),

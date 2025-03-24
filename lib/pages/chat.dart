@@ -6,8 +6,8 @@ import 'package:chat/services/chat/chatservice.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../theme/colors.dart';
 import '../services/auth/authgate.dart';
+import '../theme/theme.dart';
 
 class Chat extends StatefulWidget {
   final String reciverEmail;
@@ -28,15 +28,12 @@ class Chat extends StatefulWidget {
 class _ChatState extends State<Chat> with TickerProviderStateMixin {
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _messageController = TextEditingController();
-  final ChatService chatService = ChatService();
-  final AuthService authService = AuthService();
+  final ChatService _chatService = ChatService();
+  final AuthService _authService = AuthService();
   final FocusNode _focusNode = FocusNode();
   late AnimationController _fabAnimationController;
   bool _showScrollButton = false;
-  bool _isComposing = false;
-  bool _isTyping = false;
   String? _chatRoomID;
-  StreamSubscription? _typingSubscription;
 
   void _scrollListener() {
     if (_scrollController.position.pixels < _scrollController.position.maxScrollExtent - 300) {
@@ -61,54 +58,11 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
 
     _scrollController.addListener(_scrollListener);
 
-    _chatRoomID = chatService.getChatRoomId(
-      authService.getCurrentUser()!.uid,
+    _chatRoomID = _chatService.getChatRoomId(
+      _authService.getCurrentUser()!.uid,
       widget.reciverID,
     );
 
-    _typingSubscription = chatService.getTypingStatusStream(_chatRoomID!).listen(
-      (snapshot) {
-        if (!snapshot.exists) {
-          return;
-        }
-
-        final data = snapshot.data() as Map<String, dynamic>;
-        final currentUserID = authService.getCurrentUser()!.uid;
-        final participants = data['participants'] as List<dynamic>? ?? [];
-        final otherUserID = participants.firstWhere(
-          (id) => id != currentUserID,
-          orElse: () => widget.reciverID,
-        );
-        
-        setState(() {
-          _isTyping = data['typing']?[otherUserID.toString()] ?? false;
-        });
-      },
-    );
-
-    _messageController.addListener(() {
-      final text = _messageController.text;
-      setState(() {
-        _isComposing = text.isNotEmpty;
-      });
-
-      if (text.isNotEmpty && !_isTyping) {
-        chatService.setTypingStatus(_chatRoomID!, authService.getCurrentUser()!.uid, true);
-        setState(() => _isTyping = true);
-      } else if (text.isEmpty && _isTyping) {
-        chatService.setTypingStatus(_chatRoomID!, authService.getCurrentUser()!.uid, false);
-        setState(() => _isTyping = false);
-      }
-    });
-
-    _focusNode.addListener(() {
-      if (_focusNode.hasFocus) {
-        _fabAnimationController.forward();
-      } else {
-        _fabAnimationController.reverse();
-      }
-    });
-    
     Future.delayed(const Duration(milliseconds: 300), () => scrollDown());
   }
 
@@ -118,10 +72,6 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
     _scrollController.dispose();
     _messageController.dispose();
     _focusNode.dispose();
-    _typingSubscription?.cancel();
-    if (_isTyping) {
-      chatService.setTypingStatus(_chatRoomID!, authService.getCurrentUser()!.uid, false);
-    }
     super.dispose();
   }
 
@@ -146,19 +96,12 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
     }
   }
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+  void _sendMessage(String message) {
+    if (message.trim().isEmpty) return;
 
-    setState(() {
-      _isComposing = false;
-    });
-
-    chatService.setTypingStatus(_chatRoomID!, authService.getCurrentUser()!.uid, false);
-    setState(() => _isTyping = false);
-
-    chatService.sendMessage(
+    _chatService.sendMessage(
       widget.reciverID,
-      _messageController.text,
+      message,
     );
 
     _messageController.clear();
@@ -166,15 +109,15 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
   }
 
   void deleteMessage(String messageID) async {
-    await chatService.deleteMessage(
-      messageID, widget.reciverID, authService.getCurrentUser()!.uid
+    await _chatService.deleteMessage(
+      messageID, widget.reciverID, _authService.getCurrentUser()!.uid
     );
   }
 
   void _showOptionsDialog() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: surfaceColor,
+      backgroundColor: Theme.of(context).cardTheme.color,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -188,15 +131,15 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: dividerColor,
+                color: Theme.of(context).dividerColor,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             ListTile(
-              leading: Icon(Icons.block_outlined, color: errorColor),
+              leading: Icon(Icons.block_outlined, color: Theme.of(context).colorScheme.error),
               title: Text(
                 'Block User',
-                style: TextStyle(color: textColor),
+                style: TextStyle(color: Theme.of(context).textTheme.titleMedium?.color),
               ),
               onTap: () {
                 // Implement block functionality
@@ -204,38 +147,38 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
               },
             ),
             ListTile(
-              leading: Icon(Icons.delete_outline_rounded, color: errorColor),
+              leading: Icon(Icons.delete_outline_rounded, color: Theme.of(context).colorScheme.error),
               title: Text(
                 'Clear Chat',
-                style: TextStyle(color: textColor),
+                style: TextStyle(color: Theme.of(context).textTheme.titleMedium?.color),
               ),
               onTap: () async {
                 Navigator.pop(context);
                 bool? confirm = await showDialog<bool>(
                   context: context,
                   builder: (context) => AlertDialog(
-                    backgroundColor: surfaceColor,
+                    backgroundColor: Theme.of(context).cardTheme.color,
                     title: Text(
                       'Clear Chat',
-                      style: TextStyle(color: textColor),
+                      style: TextStyle(color: Theme.of(context).textTheme.titleMedium?.color),
                     ),
                     content: Text(
                       'Are you sure you want to clear all messages? This cannot be undone.',
-                      style: TextStyle(color: subtleTextColor),
+                      style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
                         child: Text(
                           'Cancel',
-                          style: TextStyle(color: subtleTextColor),
+                          style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
                         ),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
                         child: Text(
                           'Clear',
-                          style: TextStyle(color: errorColor),
+                          style: TextStyle(color: Theme.of(context).colorScheme.error),
                         ),
                       ),
                     ],
@@ -243,8 +186,8 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
                 );
 
                 if (confirm == true) {
-                  await chatService.clearChat(
-                    authService.getCurrentUser()!.uid,
+                  await _chatService.clearChat(
+                    _authService.getCurrentUser()!.uid,
                     widget.reciverID,
                   );
                 }
@@ -259,18 +202,18 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Theme.of(context).cardTheme.color,
       appBar: AppBar(
-        backgroundColor: surfaceColor,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: textColor, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new, color: Theme.of(context).appBarTheme.iconTheme?.color, size: 20),
           onPressed: _handleBack,
         ),
         titleSpacing: 0,
         title: StreamBuilder<DocumentSnapshot>(
-          stream: chatService.getChatRoom(
-            authService.getCurrentUser()!.uid,
+          stream: _chatService.getChatRoom(
+            _authService.getCurrentUser()!.uid,
             widget.reciverID,
           ),
           builder: (context, snapshot) {
@@ -282,25 +225,18 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
             
             // Get participants safely
             final participants = data['participants'] as List<dynamic>? ?? [];
-            final currentUserID = authService.getCurrentUser()!.uid;
+            final currentUserID = _authService.getCurrentUser()!.uid;
             final otherUserID = participants.firstWhere(
               (id) => id != currentUserID,
               orElse: () => widget.reciverID,
             );
             
-            // Get typing status safely
-            bool isOtherUserTyping = false;
-            if (data['typing'] is Map) {
-              final typingMap = data['typing'] as Map<String, dynamic>;
-              isOtherUserTyping = typingMap[otherUserID.toString()] ?? false;
-            }
-
             return Row(
               children: [
                 Hero(
-                  tag: 'avatar_${widget.reciverID}_${authService.getCurrentUser()!.uid}',
+                  tag: 'avatar_${widget.reciverID}_${_authService.getCurrentUser()!.uid}',
                   child: CircleAvatar(
-                    backgroundColor: primaryColor,
+                    backgroundColor: Theme.of(context).primaryColor,
                     child: Text(
                       widget.reciverEmail.split('@')[0].split('').first,
                       style: const TextStyle(
@@ -318,21 +254,13 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
                     children: [
                       Text(
                         widget.reciverEmail.split('@')[0],
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.titleMedium?.color,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (isOtherUserTyping)
-                        Text(
-                          'typing...',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 12,
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -345,12 +273,12 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
         children: [
           Container(
             height: 1,
-            color: dividerColor,
+            color: Theme.of(context).dividerColor,
           ),
           Expanded(child: buildMessageList()),
           Container(
             decoration: BoxDecoration(
-              color: surfaceColor,
+              color: Theme.of(context).cardTheme.color,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
@@ -369,9 +297,9 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
   }
 
   Widget buildMessageList() {
-    String senderID = authService.getCurrentUser()!.uid;
+    String senderID = _authService.getCurrentUser()!.uid;
     return StreamBuilder(
-      stream: chatService.getMessages(widget.reciverID, senderID),
+      stream: _chatService.getMessages(widget.reciverID, senderID),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return Center(
@@ -381,13 +309,13 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
                 Icon(
                   Icons.error_outline_rounded,
                   size: 48,
-                  color: accentColor,
+                  color: Theme.of(context).colorScheme.error,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   "Couldn't load messages",
                   style: TextStyle(
-                    color: textColor,
+                    color: Theme.of(context).textTheme.titleMedium?.color,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -399,7 +327,7 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
                   child: Text(
                     "Try Again",
                     style: TextStyle(
-                      color: primaryColor,
+                      color: Theme.of(context).primaryColor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -412,7 +340,7 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
+              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
               strokeWidth: 3,
             ),
           );
@@ -426,13 +354,13 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
                 Icon(
                   Icons.chat_bubble_outline_rounded,
                   size: 48,
-                  color: subtleTextColor,
+                  color: Theme.of(context).textTheme.bodySmall?.color,
                 ),
                 const SizedBox(height: 12),
                 Text(
                   "No messages yet",
                   style: TextStyle(
-                    color: textColor,
+                    color: Theme.of(context).textTheme.titleMedium?.color,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -441,7 +369,7 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
                 Text(
                   "Send a message to start chatting",
                   style: TextStyle(
-                    color: subtleTextColor,
+                    color: Theme.of(context).textTheme.bodySmall?.color,
                     fontSize: 14,
                   ),
                 ),
@@ -464,7 +392,7 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
 
   Widget buildMessageItem(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-    bool isCurrentUser = data['senderID'] == authService.getCurrentUser()!.uid;
+    bool isCurrentUser = data['senderID'] == _authService.getCurrentUser()!.uid;
     String time = DateFormat('HH:mm').format(
       (data['timestamp'] as Timestamp).toDate(),
     );
@@ -477,37 +405,37 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.symmetric(vertical: 4),
         decoration: BoxDecoration(
-          color: errorColor.withOpacity(0.2),
+          color: Theme.of(context).colorScheme.error.withOpacity(0.2),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(Icons.delete_outline, color: errorColor),
+        child: Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.error),
       ),
       confirmDismiss: (direction) async {
         if (isCurrentUser) {
           return await showDialog(
             context: context,
             builder: (BuildContext context) => AlertDialog(
-              backgroundColor: surfaceColor,
+              backgroundColor: Theme.of(context).cardTheme.color,
               title: Text(
                 'Delete Message?',
-                style: TextStyle(color: textColor),
+                style: TextStyle(color: Theme.of(context).textTheme.titleMedium?.color),
               ),
               content: Text(
                 'This action cannot be undone.',
-                style: TextStyle(color: subtleTextColor),
+                style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
               ),
               actions: [
                 TextButton(
                   child: Text(
                     'Cancel',
-                    style: TextStyle(color: subtleTextColor),
+                    style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
                   ),
                   onPressed: () => Navigator.of(context).pop(false),
                 ),
                 TextButton(
                   child: Text(
                     'Delete',
-                    style: TextStyle(color: errorColor),
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
                   ),
                   onPressed: () => Navigator.of(context).pop(true),
                 ),
@@ -540,7 +468,7 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: backgroundColor,
+                color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Row(
@@ -548,22 +476,30 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
                   SizedBox(width: 20.0,),
                   Expanded(
                     child: TextField(
-                      style: TextStyle(color: subtleTextColor),
                       controller: _messageController,
-                      focusNode: _focusNode,
                       decoration: InputDecoration(
-                        hintText: 'Message',
-                        hintStyle: TextStyle(color: subtleTextColor),
+                        hintText: "Type a message...",
+                        hintStyle: TextStyle(
+                          color: Theme.of(context).textTheme.bodySmall?.color,
+                          fontSize: 16,
+                        ),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 12,
+                          horizontal: 20,
+                          vertical: 16,
                         ),
                       ),
-                      textCapitalization: TextCapitalization.sentences,
-                      keyboardType: TextInputType.multiline,
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.titleMedium?.color,
+                        fontSize: 16,
+                      ),
                       maxLines: null,
-                      onSubmitted: (_) => _sendMessage(),
+                      onSubmitted: (value) {
+                        if (value.trim().isNotEmpty) {
+                          _sendMessage(value);
+                          _messageController.clear();
+                        }
+                      },
                     ),
                   ),
                 ],
@@ -573,14 +509,19 @@ class _ChatState extends State<Chat> with TickerProviderStateMixin {
           const SizedBox(width: 8),
           Container(
             decoration: BoxDecoration(
-              color:  backgroundColor,
+              color:  Theme.of(context).scaffoldBackgroundColor,
               shape: BoxShape.circle
             ),
             child: GestureDetector(
-              onTap: _sendMessage,
+              onTap: () {
+                if (_messageController.text.trim().isNotEmpty) {
+                  _sendMessage(_messageController.text);
+                  _messageController.clear();
+                }
+              },
               child: Icon(
                    Icons.send,
-                  color: primaryColor,
+                  color: Theme.of(context).primaryColor,
                   size: 35.0,
                 ),
             ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/colors.dart';
+import '../theme/theme.dart';
 
 class ChatBubble extends StatelessWidget {
   final String message;
@@ -39,7 +39,9 @@ class ChatBubble extends StatelessWidget {
             vertical: 10,
           ),
           decoration: BoxDecoration(
-            color: isCurrentUser ? primaryColor : surfaceColor,
+            color: isCurrentUser 
+              ? Theme.of(context).colorScheme.primary 
+              : Theme.of(context).cardTheme.color,
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(16),
               topRight: const Radius.circular(16),
@@ -48,7 +50,7 @@ class ChatBubble extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Theme.of(context).shadowColor.withOpacity(0.1),
                 blurRadius: 5,
                 offset: const Offset(0, 2),
               ),
@@ -62,7 +64,9 @@ class ChatBubble extends StatelessWidget {
                   Text(
                     message,
                     style: TextStyle(
-                      color: isCurrentUser ? Colors.white : textColor,
+                      color: isCurrentUser 
+                        ? Colors.white 
+                        : Theme.of(context).textTheme.bodySmall?.color,
                       fontSize: 15,
                     ),
                   ),
@@ -73,7 +77,9 @@ class ChatBubble extends StatelessWidget {
                       Text(
                         time,
                         style: TextStyle(
-                          color: isCurrentUser ? Colors.white70 : subtleTextColor,
+                          color: isCurrentUser 
+                            ? Colors.white70 
+                            : Theme.of(context).hintColor,
                           fontSize: 12,
                         ),
                       ),
@@ -97,7 +103,7 @@ class ChatBubble extends StatelessWidget {
                           size: 16,
                           color: isCurrentUser 
                               ? Colors.white.withOpacity(0.7)
-                              : subtleTextColor,
+                              : Theme.of(context).hintColor,
                         ),
                       ),
                     ),
@@ -114,33 +120,37 @@ class ChatBubble extends StatelessWidget {
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: surfaceColor,
+        backgroundColor: Theme.of(context).cardTheme.color,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Delete Message',
-          style: TextStyle(color: textColor),
+          style: TextStyle(
+            color: Theme.of(context).textTheme.titleMedium?.color,
+          ),
         ),
         content: Text(
           'Are you sure you want to delete this message?',
-          style: TextStyle(color: subtleTextColor),
+          style: TextStyle(
+            color: Theme.of(context).textTheme.bodySmall?.color,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: secondaryColor),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.secondary,
             ),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
               onDelete?.call();
               Navigator.pop(context);
             },
-            child: Text(
-              'Delete',
-              style: TextStyle(color: errorColor),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
             ),
+            child: const Text('Delete'),
           ),
         ],
       ),

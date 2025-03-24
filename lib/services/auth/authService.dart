@@ -53,6 +53,22 @@ class AuthService {
     return await auth.signOut();
   }
 
+  // Delete user account
+  Future<void> deleteAccount() async {
+    try {
+      final user = auth.currentUser;
+      if (user == null) throw Exception('No user is currently signed in');
+
+      // Delete user from Firestore
+      await firestore.collection('Users').doc(user.uid).delete();
+
+      // Delete user from Firebase Auth
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.message ?? 'Failed to delete account');
+    }
+  }
+
   // Update user's FCM token in Firestore
   Future<void> _updateUserFCMToken(String uid, String email) async {
     try {

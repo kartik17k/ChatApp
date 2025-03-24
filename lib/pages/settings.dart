@@ -3,80 +3,35 @@ import '../services/chat/chatservice.dart';
 import '../services/auth/authgate.dart';
 import '../theme/colors.dart';
 import '../services/auth/authService.dart';
+import '../services/theme/theme_service.dart';
 import 'aboutApp.dart';
+import 'package:provider/provider.dart';
 
-class Settings extends StatefulWidget {
+class Settings extends StatelessWidget {
   const Settings({super.key});
-
-  @override
-  State<Settings> createState() => _SettingsState();
-}
-
-class _SettingsState extends State<Settings> {
-  final ChatService chatService = ChatService();
-  final AuthService authService = AuthService();
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  Future<void> _deleteAccount() async {
-    try {
-      setState(() => _isLoading = true);
-      await chatService.deleteUserAccount();
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const AuthGate(),
-        ),
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Failed to delete account: ${e.toString()}',
-              style: const TextStyle(color: Colors.white),
-            ),
-            backgroundColor: errorColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: surfaceColor,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         title: Text(
           "Settings",
           style: TextStyle(
-            color: textColor,
+            color: Theme.of(context).appBarTheme.titleTextStyle?.color,
             fontSize: 24,
             fontWeight: FontWeight.w600,
           ),
         ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: textColor),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: Theme.of(context).appBarTheme.iconTheme?.color),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.info_outline_rounded, color: textColor),
+            icon: Icon(Icons.info_outline_rounded, color: Theme.of(context).appBarTheme.iconTheme?.color),
             onPressed: () {
               Navigator.push(
                 context,
@@ -91,7 +46,7 @@ class _SettingsState extends State<Settings> {
           SliverToBoxAdapter(
             child: Container(
               padding: const EdgeInsets.all(24),
-              color: surfaceColor,
+              color: Theme.of(context).cardTheme.color,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -99,12 +54,12 @@ class _SettingsState extends State<Settings> {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: primaryColor,
+                      color: Theme.of(context).colorScheme.primary,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: Text(
-                        authService.getCurrentUser()!.email!
+                        AuthService().getCurrentUser()!.email!
                             .split('@')[0][0]
                             .toUpperCase(),
                         style: const TextStyle(
@@ -117,19 +72,19 @@ class _SettingsState extends State<Settings> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    authService.getCurrentUser()!.email!
+                    AuthService().getCurrentUser()!.email!
                         .split('@')[0],
                     style: TextStyle(
-                      color: textColor,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    authService.getCurrentUser()!.email!,
+                    AuthService().getCurrentUser()!.email!,
                     style: TextStyle(
-                      color: subtleTextColor,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                       fontSize: 14,
                     ),
                   ),
@@ -142,6 +97,7 @@ class _SettingsState extends State<Settings> {
               [
                 const SizedBox(height: 16),
                 _buildSettingsSection(
+                  context: context,
                   title: "Account",
                   options: [
                     _SettingsOption(
@@ -164,20 +120,78 @@ class _SettingsState extends State<Settings> {
                 ),
                 const SizedBox(height: 16),
                 _buildSettingsSection(
+                  context: context,
                   title: "App",
                   options: [
                     _SettingsOption(
                       icon: Icons.dark_mode_outlined,
                       title: "Theme",
                       subtitle: "Change app theme",
-                      onTap: () {
-                        // TODO: Implement theme settings
+                      onTap: () async {
+                        final themeService = Provider.of<ThemeService>(context, listen: false);
+                        final currentMode = themeService.themeNotifier.value;
+                        
+                        final newMode = await showDialog<ThemeMode>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text("Theme Mode"),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ListTile(
+                                  leading: const Icon(Icons.light_mode_outlined),
+                                  title: const Text("Light"),
+                                  trailing: Radio<ThemeMode>(
+                                    value: ThemeMode.light,
+                                    groupValue: currentMode,
+                                    onChanged: (value) {
+                                      Navigator.pop(context, value);
+                                    },
+                                  ),
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.dark_mode_outlined),
+                                  title: const Text("Dark"),
+                                  trailing: Radio<ThemeMode>(
+                                    value: ThemeMode.dark,
+                                    groupValue: currentMode,
+                                    onChanged: (value) {
+                                      Navigator.pop(context, value);
+                                    },
+                                  ),
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.brightness_auto_outlined),
+                                  title: const Text("System"),
+                                  trailing: Radio<ThemeMode>(
+                                    value: ThemeMode.system,
+                                    groupValue: currentMode,
+                                    onChanged: (value) {
+                                      Navigator.pop(context, value);
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("Cancel"),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (newMode != null) {
+                          await themeService.setThemeMode(newMode);
+                        }
                       },
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 _buildSettingsSection(
+                  context: context,
                   title: "Help",
                   options: [
                     _SettingsOption(
@@ -194,9 +208,34 @@ class _SettingsState extends State<Settings> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: ElevatedButton.icon(
-                    onPressed: _isLoading ? null : _deleteAccount,
+                    onPressed: () async {
+                      try {
+                        final chatService = ChatService();
+                        await chatService.deleteUserAccount();
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AuthGate(),
+                          ),
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'Failed to delete account: ${e.toString()}',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            backgroundColor: Theme.of(context).colorScheme.error,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        );
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: errorColor,
+                      backgroundColor: Theme.of(context).colorScheme.error,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 24,
@@ -226,8 +265,9 @@ class _SettingsState extends State<Settings> {
   }
 
   Widget _buildSettingsSection({
+    required BuildContext context,
     required String title,
-    required List<_SettingsOption> options,
+    required List<Widget> options,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,13 +277,13 @@ class _SettingsState extends State<Settings> {
           child: Text(
             title,
             style: TextStyle(
-              color: textColor,
+              color: Theme.of(context).textTheme.titleMedium?.color,
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         ...options,
       ],
     );
@@ -269,19 +309,12 @@ class _SettingsOption extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 16,
-          ),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           child: Row(
             children: [
-              Icon(
-                icon,
-                color: primaryColor,
-                size: 24,
-              ),
+              Icon(icon, color: Theme.of(context).textTheme.bodyLarge?.color),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -290,7 +323,7 @@ class _SettingsOption extends StatelessWidget {
                     Text(
                       title,
                       style: TextStyle(
-                        color: textColor,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
@@ -299,7 +332,7 @@ class _SettingsOption extends StatelessWidget {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        color: subtleTextColor,
+                        color: Theme.of(context).textTheme.bodySmall?.color,
                         fontSize: 14,
                       ),
                     ),
@@ -308,8 +341,8 @@ class _SettingsOption extends StatelessWidget {
               ),
               Icon(
                 Icons.arrow_forward_ios_rounded,
-                color: subtleTextColor,
-                size: 18,
+                size: 16,
+                color: Theme.of(context).textTheme.bodySmall?.color,
               ),
             ],
           ),
