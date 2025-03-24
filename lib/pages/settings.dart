@@ -1,3 +1,4 @@
+import 'package:chat/pages/privacy.dart';
 import 'package:flutter/material.dart';
 import '../services/chat/chatservice.dart';
 import '../services/auth/authgate.dart';
@@ -6,6 +7,9 @@ import '../services/auth/authService.dart';
 import '../services/theme/theme_service.dart';
 import 'aboutApp.dart';
 import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'notifications_settings.dart';
+import 'help.dart';
 
 class Settings extends StatelessWidget {
   const Settings({super.key});
@@ -105,7 +109,10 @@ class Settings extends StatelessWidget {
                       title: "Notifications",
                       subtitle: "Manage your notification preferences",
                       onTap: () {
-                        // TODO: Implement notifications settings
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const NotificationsSettings()),
+                        );
                       },
                     ),
                     _SettingsOption(
@@ -113,7 +120,10 @@ class Settings extends StatelessWidget {
                       title: "Privacy",
                       subtitle: "Manage your privacy settings",
                       onTap: () {
-                        // TODO: Implement privacy settings
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const PrivacySettings()),
+                        );
                       },
                     ),
                   ],
@@ -199,7 +209,10 @@ class Settings extends StatelessWidget {
                       title: "Help Center",
                       subtitle: "Get help with using the app",
                       onTap: () {
-                        // TODO: Implement help center
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const Help()),
+                        );
                       },
                     ),
                   ],
@@ -346,6 +359,105 @@ class _SettingsOption extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class NotificationsSettings extends StatefulWidget {
+  const NotificationsSettings({super.key});
+
+  @override
+  State<NotificationsSettings> createState() => _NotificationsSettingsState();
+}
+
+class _NotificationsSettingsState extends State<NotificationsSettings> {
+  bool _notificationsEnabled = true;
+  bool _soundEnabled = true;
+  bool _vibrationEnabled = true;
+  bool _showPreviews = true;
+  bool _showBadge = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkNotificationPermission();
+  }
+
+  Future<void> _checkNotificationPermission() async {
+    final status = await Permission.notification.status;
+    setState(() {
+      _notificationsEnabled = status.isGranted;
+    });
+  }
+
+  Future<void> _requestNotificationPermission() async {
+    final status = await Permission.notification.request();
+    setState(() {
+      _notificationsEnabled = status.isGranted;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Notifications"),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            SwitchListTile(
+              title: const Text("Notifications"),
+              value: _notificationsEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _notificationsEnabled = value;
+                });
+                if (value) {
+                  _requestNotificationPermission();
+                }
+              },
+            ),
+            SwitchListTile(
+              title: const Text("Sound"),
+              value: _soundEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _soundEnabled = value;
+                });
+              },
+            ),
+            SwitchListTile(
+              title: const Text("Vibration"),
+              value: _vibrationEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _vibrationEnabled = value;
+                });
+              },
+            ),
+            SwitchListTile(
+              title: const Text("Show Previews"),
+              value: _showPreviews,
+              onChanged: (value) {
+                setState(() {
+                  _showPreviews = value;
+                });
+              },
+            ),
+            SwitchListTile(
+              title: const Text("Show Badge"),
+              value: _showBadge,
+              onChanged: (value) {
+                setState(() {
+                  _showBadge = value;
+                });
+              },
+            ),
+          ],
         ),
       ),
     );
