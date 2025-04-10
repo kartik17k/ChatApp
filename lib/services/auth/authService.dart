@@ -14,7 +14,7 @@ class AuthService {
   }
 
   //sign in
-  Future<UserCredential> signInWithEmailPassword(String email, password) async {
+  Future<UserCredential> signInWithEmailPassword(String email, String password) async {
     try {
       UserCredential userCredential = await auth.signInWithEmailAndPassword(
         email: email, 
@@ -25,26 +25,38 @@ class AuthService {
       await _updateUserFCMToken(userCredential.user!.uid, email);
       
       return userCredential;
-    } on FirebaseAuthException catch(e) {
-      throw Exception(e.code);
+    } catch (e) {
+      if (e is FirebaseAuthException) {
+        throw Exception(_getErrorMessage(e));
+      } else {
+        throw Exception('An unexpected error occurred');
+      }
     }
   }
 
   //sign up
-  Future<UserCredential> signUpWithEmailPassword(String email, password) async {
+  Future<UserCredential> signUpWithEmailPassword(String email, String password) async {
     try {
-      //create user
+      // Create user
       UserCredential userCredential = await auth.createUserWithEmailAndPassword(
         email: email, 
         password: password
       );
 
+      // Get user info
+      final user = userCredential.user;
+      if (user == null) {
+        throw Exception('Failed to create user');
+      }
+
       // Get FCM token and save with user info
-      await _updateUserFCMToken(userCredential.user!.uid, email);
+      await _updateUserFCMToken(user.uid, email);
 
       return userCredential;
-    } on FirebaseAuthException catch(e) {
-      throw Exception(e.code);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_getErrorMessage(e));
+    } catch (e) {
+      throw Exception('An unexpected error occurred: ${e.toString()}');
     }
   }
 
@@ -64,8 +76,12 @@ class AuthService {
 
       // Delete user from Firebase Auth
       await user.delete();
-    } on FirebaseAuthException catch (e) {
-      throw Exception(e.message ?? 'Failed to delete account');
+    } catch (e) {
+      if (e is FirebaseAuthException) {
+        throw Exception(_getErrorMessage(e));
+      } else {
+        throw Exception('Failed to delete account');
+      }
     }
   }
 
@@ -84,19 +100,44 @@ class AuthService {
         String? token = await _firebaseMessaging.getToken();
 
         if (token != null) {
-          // Save user info with FCM token
+          // Save user info with FCM token in the exact structure shown
+          final userData = {
+            'email': email,
+            'fcmToken': token,
+            'uid': uid,
+          };
+
           await firestore.collection("Users").doc(uid).set(
-            {
-              'uid': uid,
-              'email': email,
-              'fcmToken': token,
-            },
-            SetOptions(merge: true), // This ensures we don't overwrite existing data
+            userData,
+            SetOptions(merge: true),
           );
         }
       }
     } catch (e) {
       print('Error updating FCM token: $e');
+      rethrow; // Rethrow to handle in the calling function
+    }
+  }
+
+  // Helper method to get user-friendly error messages
+  String _getErrorMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'invalid-email':
+        return 'The email address is not valid.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
+      case 'user-not-found':
+        return 'No user found with this email.';
+      case 'wrong-password':
+        return 'The password is incorrect.';
+      case 'email-already-in-use':
+        return 'This email is already registered.';
+      case 'weak-password':
+        return 'The password is too weak.';
+      case 'network-request-failed':
+        return 'Network request failed. Please check your internet connection.';
+      default:
+        return e.message ?? 'An error occurred. Please try again.';
     }
   }
 }

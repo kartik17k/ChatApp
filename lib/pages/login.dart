@@ -1,63 +1,90 @@
 import 'package:flutter/material.dart';
-import '../components/buttons.dart';
 import '../components/textfield.dart';
+import '../components/buttons.dart';
 import '../services/auth/authService.dart';
-import '../theme/colors.dart';
 import '../theme/theme.dart';
-import 'forget.dart';
+import 'register.dart';
+import 'home.dart'; // Add this line
 
-class Login extends StatelessWidget {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final void Function()? onTap;
+class Login extends StatefulWidget {
+  const Login({super.key});
 
-  Login({super.key, required this.onTap});
+  @override
+  State<Login> createState() => _LoginState();
+}
 
-  void login(BuildContext context) async {
-    final authService = AuthService();
+class _LoginState extends State<Login> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
+
     try {
-      await authService.signInWithEmailPassword(
-        emailController.text,
-        passwordController.text,
+      await _authService.signInWithEmailPassword(
+        _emailController.text,
+        _passwordController.text,
       );
+      // AuthGate will handle navigation
     } catch (e) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: Theme.of(context).cardTheme.color,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Row(
-            children: [
-              Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
-              const SizedBox(width: 12),
-              Text(
-                "Error",
-                style: TextStyle(color: Theme.of(context).textTheme.titleMedium?.color),
-              ),
-            ],
-          ),
-          content: Text(
-            e.toString(),
-            style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: TextButton.styleFrom(
-                foregroundColor: Theme.of(context).textTheme.bodySmall?.color,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-              ),
-              child: const Text("OK"),
+      if (e is Exception) {
+        _showErrorDialog(e.toString());
+      } else {
+        _showErrorDialog('An unexpected error occurred. Please try again.');
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardTheme.color,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
+            const SizedBox(width: 12),
+            Text(
+              "Error",
+              style: TextStyle(color: Theme.of(context).textTheme.titleMedium?.color),
             ),
           ],
         ),
-      );
-    }
+        content: Text(
+          message,
+          style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).textTheme.bodySmall?.color,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 10,
+              ),
+            ),
+            child: const Text("OK"),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -101,7 +128,7 @@ class Login extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "We're glad to see you again",
+                          "Sign in to continue",
                           style: TextStyle(
                             color: Theme.of(context).textTheme.bodySmall?.color,
                             fontSize: 16,
@@ -110,96 +137,57 @@ class Login extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32),
 
-                  // Email input
+                  // Email field
                   MyTextField(
-                    hintText: "Email",
-                    labelText: "Email Address",
-                    obscureText: false,
-                    controller: emailController,
+                    hintText: 'Enter your email',
+                    controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    prefixIcon: Icon(
-                      Icons.email_outlined,
-                      color: Theme.of(context).textTheme.bodySmall?.color,
-                    ),
+                    textInputAction: TextInputAction.next,
+                    prefixIcon: Icon(Icons.email_outlined, color: Theme.of(context).iconTheme.color),
+                    enabled: !_isLoading,
                   ),
                   const SizedBox(height: 16),
 
-                  // Password input
+                  // Password field
                   MyTextField(
-                    hintText: "Password",
-                    labelText: "Password",
+                    hintText: 'Enter your password',
+                    controller: _passwordController,
                     obscureText: true,
-                    controller: passwordController,
-                    prefixIcon: Icon(
-                      Icons.lock_outline_rounded,
-                      color: Theme.of(context).textTheme.bodySmall?.color,
-                    ),
+                    textInputAction: TextInputAction.done,
+                    prefixIcon: Icon(Icons.lock_outline, color: Theme.of(context).iconTheme.color),
+                    enabled: !_isLoading,
                   ),
+                  const SizedBox(height: 16),
 
-                  // Forgot Password
-                  Align(
-                    alignment: Alignment.centerRight,
+                  // Login button
+                  Buttons(
+                    text: _isLoading ? 'Loading...' : 'Login',
+                    onTap: _login,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Register button
+                  Center(
                     child: TextButton(
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => ForgetPage()),
+                          MaterialPageRoute(builder: (context) => const Register()),
                         );
                       },
                       style: TextButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.secondary,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
+                        foregroundColor: Theme.of(context).textTheme.bodySmall?.color,
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: Text(
+                        "Don't have an account? Sign Up",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      child: const Text("Forgot Password?"),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Login button
-                  ElevatedButton(
-                    onPressed: () => login(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      "Sign In",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Register text
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Don't have an account? ",
-                        style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
-                      ),
-                      GestureDetector(
-                        onTap: onTap,
-                        child: Text(
-                          "Sign Up",
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.secondary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),

@@ -1,81 +1,66 @@
 import 'package:flutter/material.dart';
 import '../components/textfield.dart';
+import '../components/buttons.dart';
 import '../services/auth/authService.dart';
 import '../theme/theme.dart';
+import 'login.dart';
+import 'home.dart'; // Import the Home page
 
 class Register extends StatefulWidget {
-  final void Function()? onTap;
-
-  const Register({super.key, this.onTap});
+  const Register({super.key});
 
   @override
   State<Register> createState() => _RegisterState();
 }
 
 class _RegisterState extends State<Register> {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
-  final AuthService authService = AuthService();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  final AuthService _authService = AuthService();
   bool _isLoading = false;
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _register() async {
-    if (passwordController.text != confirmPasswordController.text) {
-      _showErrorDialog(
-        title: "Password Mismatch",
-        message: "The passwords you entered don't match. Please try again.",
-        icon: Icons.warning_amber_rounded,
-        color: Colors.amber,
-      );
+    if (_isLoading) return;
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      _showErrorDialog('Passwords do not match');
       return;
     }
 
-    if (passwordController.text.length < 6) {
-      _showErrorDialog(
-        title: "Password Too Short",
-        message: "Password must be at least 6 characters long.",
-        icon: Icons.error_outline,
-        color: Theme.of(context).colorScheme.error,
-      );
+    if (_passwordController.text.length < 6) {
+      _showErrorDialog('Password must be at least 6 characters long');
       return;
     }
 
-    if (!emailController.text.contains('@')) {
-      _showErrorDialog(
-        title: "Invalid Email",
-        message: "Please enter a valid email address.",
-        icon: Icons.error_outline,
-        color: Theme.of(context).colorScheme.error,
-      );
-      return;
-    }
+    setState(() => _isLoading = true);
 
     try {
-      setState(() => _isLoading = true);
-      await authService.signUpWithEmailPassword(
-        emailController.text,
-        passwordController.text,
+      await _authService.signUpWithEmailPassword(
+        _emailController.text,
+        _passwordController.text,
       );
+      // AuthGate will handle navigation
     } catch (e) {
-      _showErrorDialog(
-        title: "Registration Failed",
-        message: e.toString(),
-        icon: Icons.error_outline,
-        color: Theme.of(context).colorScheme.error,
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
+      if (e is Exception) {
+        _showErrorDialog(e.toString());
+      } else {
+        _showErrorDialog('An unexpected error occurred. Please try again.');
       }
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
-  void _showErrorDialog({
-    required String title,
-    required String message,
-    required IconData icon,
-    required Color color,
-  }) {
+  void _showErrorDialog(String message) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -85,22 +70,17 @@ class _RegisterState extends State<Register> {
         ),
         title: Row(
           children: [
-            Icon(icon, color: color),
+            Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
             const SizedBox(width: 12),
             Text(
-              title,
-              style: TextStyle(
-                color: Theme.of(context).textTheme.titleMedium?.color,
-                fontWeight: FontWeight.w600,
-              ),
+              "Error",
+              style: TextStyle(color: Theme.of(context).textTheme.titleMedium?.color),
             ),
           ],
         ),
         content: Text(
           message,
-          style: TextStyle(
-            color: Theme.of(context).textTheme.bodySmall?.color,
-          ),
+          style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
         ),
         actions: [
           TextButton(
@@ -144,7 +124,7 @@ class _RegisterState extends State<Register> {
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
-                            Icons.person_add_alt_1_outlined,
+                            Icons.chat_bubble_outline_rounded,
                             size: 48,
                             color: Theme.of(context).colorScheme.primary,
                           ),
@@ -160,7 +140,7 @@ class _RegisterState extends State<Register> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          "Join the community",
+                          "Create your account",
                           style: TextStyle(
                             color: Theme.of(context).textTheme.bodySmall?.color,
                             fontSize: 16,
@@ -169,75 +149,68 @@ class _RegisterState extends State<Register> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32),
+
+                  // Email field
                   MyTextField(
-                    controller: emailController,
-                    hintText: "Email",
+                    hintText: 'Enter your email',
+                    controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    prefixIcon: Icon(
-                      Icons.email_outlined,
-                      color: Theme.of(context).textTheme.bodySmall?.color,
-                    ),
+                    textInputAction: TextInputAction.next,
+                    prefixIcon: Icon(Icons.email_outlined, color: Theme.of(context).iconTheme.color),
+                    enabled: !_isLoading,
                   ),
                   const SizedBox(height: 16),
+
+                  // Password field
                   MyTextField(
-                    controller: passwordController,
-                    hintText: "Password",
+                    hintText: 'Enter your password',
+                    controller: _passwordController,
                     obscureText: true,
-                    prefixIcon: Icon(
-                      Icons.lock_outline_rounded,
-                      color: Theme.of(context).textTheme.bodySmall?.color,
-                    ),
+                    textInputAction: TextInputAction.next,
+                    prefixIcon: Icon(Icons.lock_outline, color: Theme.of(context).iconTheme.color),
+                    enabled: !_isLoading,
                   ),
                   const SizedBox(height: 16),
+
+                  // Confirm password field
                   MyTextField(
-                    controller: confirmPasswordController,
-                    hintText: "Confirm Password",
+                    hintText: 'Confirm password',
+                    controller: _confirmPasswordController,
                     obscureText: true,
-                    prefixIcon: Icon(
-                      Icons.lock_outline_rounded,
-                      color: Theme.of(context).textTheme.bodySmall?.color,
-                    ),
+                    textInputAction: TextInputAction.done,
+                    prefixIcon: Icon(Icons.lock_outline, color: Theme.of(context).iconTheme.color),
+                    enabled: !_isLoading,
                   ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _register,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  const SizedBox(height: 16),
+
+                  // Register button
+                  Buttons(
+                    text: _isLoading ? 'Loading...' : 'Sign Up',
+                    onTap: _register,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Login button
+                  Center(
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const Login()),
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(context).textTheme.bodySmall?.color,
+                        padding: EdgeInsets.zero,
                       ),
-                    ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            strokeWidth: 2,
-                          )
-                        : const Text("Create Account"),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Already have an account? ",
+                      child: Text(
+                        "Already have an account? Login",
                         style: TextStyle(
-                          color: Theme.of(context).textTheme.bodySmall?.color,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                      GestureDetector(
-                        onTap: widget.onTap,
-                        child: Text(
-                          "Sign In",
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.secondary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ],
               ),
