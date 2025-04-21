@@ -11,6 +11,7 @@ import 'package:http/http.dart' show Client;
 import 'package:chat/main.dart'; // Import the global navigator key
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:chat/services/auth/authgate.dart'; // Import AuthGate
+import 'package:flutter_dotenv/flutter_dotenv.dart' as dotenv;
 
 // Background message handler
 @pragma('vm:entry-point')
@@ -34,28 +35,33 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 Future<void> _storeNotificationData(RemoteMessage message) async {
   // Use shared preferences to store notification data
   final prefs = await SharedPreferences.getInstance();
-  
+
   // Store notification details
-  await prefs.setString('pending_notification_chat_id', message.data['chatId'] ?? '');
-  await prefs.setString('pending_notification_sender_email', message.data['senderEmail'] ?? '');
-  await prefs.setString('pending_notification_sender_id', message.data['senderId'] ?? '');
-  
+  await prefs.setString(
+      'pending_notification_chat_id', message.data['chatId'] ?? '');
+  await prefs.setString(
+      'pending_notification_sender_email', message.data['senderEmail'] ?? '');
+  await prefs.setString(
+      'pending_notification_sender_id', message.data['senderId'] ?? '');
+
   // Set a flag to indicate app was launched from notification
   await prefs.setBool('launched_from_notification', true);
 }
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   // Firebase project details
-  static const String _projectId = 'chat-a9a04'; // Firebase project ID
-  static const String _firebaseScope = 'https://www.googleapis.com/auth/firebase.messaging';
+  static String get _projectId => dotenv.env['FIREBASE_PROJECT_ID'] ?? '';
+  static const String _firebaseScope =
+      'https://www.googleapis.com/auth/firebase.messaging';
 
   // New method for initializing notifications
   Future<void> initNotifications() async {
     print('🔔 Initializing Notifications');
-    
+
     // Request notification permissions
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
@@ -64,7 +70,7 @@ class NotificationService {
       provisional: true,
     );
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized || 
+    if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
       // Get FCM token
       final String? token = await _firebaseMessaging.getToken();
@@ -77,11 +83,11 @@ class NotificationService {
   // New method for setting up highlight notification handling
   void setupHighlightNotificationHandling() {
     print('🔔 Setting up Highlight Notification Handling');
-    
+
     // Configure how to handle notifications when the app is in the foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('🔔 Received a foreground message');
-      
+
       // Check if the message contains a highlight notification
       if (message.data['type'] == 'highlight') {
         // Display a local notification
@@ -93,21 +99,21 @@ class NotificationService {
   // Helper method to show highlight notifications
   void _showHighlightNotification(RemoteMessage message) async {
     // Create a local notification for highlight messages
-    const AndroidNotificationDetails androidPlatformChannelSpecifics = 
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
-      'highlight_channel', 
+      'highlight_channel',
       'Highlight Notifications',
       importance: Importance.high,
       priority: Priority.high,
     );
-    
-    const NotificationDetails platformChannelSpecifics = 
+
+    const NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
-    
+
     await _flutterLocalNotificationsPlugin.show(
       0, // Notification ID
-      message.notification?.title ?? 'New Highlight', 
-      message.notification?.body ?? 'You have a new highlight', 
+      message.notification?.title ?? 'New Highlight',
+      message.notification?.body ?? 'You have a new highlight',
       platformChannelSpecifics,
       payload: message.data['payload'] ?? '',
     );
@@ -121,20 +127,23 @@ class NotificationService {
 
     try {
       // Request notification permissions
-      NotificationSettings settings = await _firebaseMessaging.requestPermission(
+      NotificationSettings settings =
+          await _firebaseMessaging.requestPermission(
         alert: true,
         badge: true,
         sound: true,
         provisional: true, // Add this for iOS
       );
 
-      print('🔔 Notification Permission Status: ${settings.authorizationStatus}');
+      print(
+          '🔔 Notification Permission Status: ${settings.authorizationStatus}');
 
-      if (settings.authorizationStatus == AuthorizationStatus.authorized || 
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional) {
         // Configure Firebase Messaging
         FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-          print('🔔 Received message in foreground: ${message.notification?.title}');
+          print(
+              '🔔 Received message in foreground: ${message.notification?.title}');
           _handleForegroundMessage(message, context);
         });
 
@@ -147,9 +156,10 @@ class NotificationService {
         await _checkInitialMessage();
 
         // Initialize local notifications with a default channel
-        const AndroidInitializationSettings initializationSettingsAndroid = 
+        const AndroidInitializationSettings initializationSettingsAndroid =
             AndroidInitializationSettings('@mipmap/ic_launcher');
-        final InitializationSettings initializationSettings = InitializationSettings(
+        final InitializationSettings initializationSettings =
+            InitializationSettings(
           android: initializationSettingsAndroid,
         );
         await _flutterLocalNotificationsPlugin.initialize(
@@ -169,7 +179,8 @@ class NotificationService {
         );
 
         await _flutterLocalNotificationsPlugin
-            .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+            .resolvePlatformSpecificImplementation<
+                AndroidFlutterLocalNotificationsPlugin>()
             ?.createNotificationChannel(channel);
 
         // Get FCM token
@@ -185,9 +196,9 @@ class NotificationService {
 
   void _onNotificationTap(NotificationResponse details) {
     print('🔔 Notification tapped with payload: ${details.payload}');
-    
+
     final String? payload = details.payload;
-    
+
     if (payload != null) {
       // Extract sender details from payload
       final parts = payload.split('|');
@@ -214,10 +225,11 @@ class NotificationService {
   // Add a method to handle initial notification when app is launched from a terminated state
   Future<void> _checkInitialMessage() async {
     print('🔔 Checking for initial message');
-    
+
     // Check if the app was opened from a terminated state
-    RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-    
+    RemoteMessage? initialMessage =
+        await FirebaseMessaging.instance.getInitialMessage();
+
     if (initialMessage != null) {
       print('🔔 App opened from terminated state with message');
       await _storeNotificationData(initialMessage);
@@ -237,17 +249,14 @@ class NotificationService {
   }
 
   // New method to handle navigation with a back option
-  void navigateToChatOrHome(BuildContext context, {
-    String? senderEmail, 
-    String? senderId, 
-    bool allowBack = false
-  }) {
+  void navigateToChatOrHome(BuildContext context,
+      {String? senderEmail, String? senderId, bool allowBack = false}) {
     if (senderEmail != null && senderId != null) {
       // Navigate to chat with an option to go back
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) => Chat(
-            reciverEmail: senderEmail, 
+            reciverEmail: senderEmail,
             reciverID: senderId,
             allowBack: allowBack, // Pass the back navigation option
           ),
@@ -256,19 +265,19 @@ class NotificationService {
     } else {
       // If no sender details, navigate to home page
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => AuthGate()), 
-        (route) => false
-      );
+          MaterialPageRoute(builder: (context) => AuthGate()),
+          (route) => false);
     }
   }
 
-  void _triggerChatNavigation(String senderEmail, String senderId, {bool allowBack = false}) {
+  void _triggerChatNavigation(String senderEmail, String senderId,
+      {bool allowBack = false}) {
     // Use the global navigator key to navigate
     if (navigatorKey.currentState != null) {
       navigatorKey.currentState!.pushReplacement(
         MaterialPageRoute(
           builder: (context) => Chat(
-            reciverEmail: senderEmail, 
+            reciverEmail: senderEmail,
             reciverID: senderId,
             allowBack: allowBack, // Pass the back navigation option
           ),
@@ -282,15 +291,20 @@ class NotificationService {
   // Method to check for pending notifications when app starts
   Future<void> checkPendingNotifications() async {
     final prefs = await SharedPreferences.getInstance();
-    
-    final String? senderEmail = prefs.getString('pending_notification_sender_email');
+
+    final String? senderEmail =
+        prefs.getString('pending_notification_sender_email');
     final String? senderId = prefs.getString('pending_notification_sender_id');
-    final bool? launchedFromNotification = prefs.getBool('launched_from_notification');
-    
-    if (senderEmail != null && senderId != null && launchedFromNotification != null && launchedFromNotification) {
+    final bool? launchedFromNotification =
+        prefs.getBool('launched_from_notification');
+
+    if (senderEmail != null &&
+        senderId != null &&
+        launchedFromNotification != null &&
+        launchedFromNotification) {
       print('🔔 Found pending notification, navigating to chat');
       _triggerChatNavigation(senderEmail, senderId);
-      
+
       // Clear the stored notification data
       await prefs.remove('pending_notification_sender_email');
       await prefs.remove('pending_notification_sender_id');
@@ -298,31 +312,34 @@ class NotificationService {
     }
   }
 
-  Future<void> _handleForegroundMessage(RemoteMessage message, BuildContext context) async {
+  Future<void> _handleForegroundMessage(
+      RemoteMessage message, BuildContext context) async {
     print('🔔 Got a message whilst in the foreground!');
     print('🔔 Message data: ${message.data}');
 
     if (message.notification != null) {
-      print('🔔 Message also contained a notification: ${message.notification}');
-      
+      print(
+          '🔔 Message also contained a notification: ${message.notification}');
+
       // Show local notification when app is in foreground
-      const AndroidNotificationDetails androidPlatformChannelSpecifics = 
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
           AndroidNotificationDetails(
         'chat_channel',
         'Chat Notifications',
         importance: Importance.high,
         priority: Priority.high,
       );
-      
-      final NotificationDetails platformChannelSpecifics = 
+
+      final NotificationDetails platformChannelSpecifics =
           NotificationDetails(android: androidPlatformChannelSpecifics);
-      
+
       await _flutterLocalNotificationsPlugin.show(
         message.hashCode,
         message.notification?.title,
         message.notification?.body,
         platformChannelSpecifics,
-        payload: '${message.data['senderEmail']}|${message.data['senderId']}|${message.data['chatId']}',
+        payload:
+            '${message.data['senderEmail']}|${message.data['senderId']}|${message.data['chatId']}',
       );
     }
   }
@@ -367,7 +384,8 @@ class NotificationService {
 
       // Send notification via V1 API
       final response = await client.post(
-        Uri.parse('https://fcm.googleapis.com/v1/projects/$_projectId/messages:send'),
+        Uri.parse(
+            'https://fcm.googleapis.com/v1/projects/$_projectId/messages:send'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -377,7 +395,8 @@ class NotificationService {
       if (response.statusCode == 200) {
         print('Notification sent successfully');
       } else {
-        print('Failed to send notification. Status code: ${response.statusCode}');
+        print(
+            'Failed to send notification. Status code: ${response.statusCode}');
         print('Response body: ${response.body}');
       }
     } catch (e) {
@@ -389,22 +408,21 @@ class NotificationService {
   Future<Client> _getAuthenticatedClient() async {
     final serviceAccountCredentials = auth.ServiceAccountCredentials.fromJson({
       "type": "service_account",
-      "project_id": "chat-a9a04",
-      "private_key_id": "dba9755e4741a026b1e8a64fed79a6d16c2291b2",
-      "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDNThk3e3zaYkMB\nYoc/eRGA1xOmhS9ZolHIzupq8w+SeWI6lxnBU0GxB9/N7rEgGWTbKj5XCHLhvbPX\ntKEfMYlc8UPxssjSJCCVxUKyH4NtHoUudQjHLQxCK6dKcYMweJQjpGd3nMRMjCIO\nX0R+cAJQDgGGlNvn4VjBCjk1AGgU+ssb8Vd4tFBt422FPm4t38LthGpdfhShriu+\nyCmJO+YYq0ZL5StWMkA+IPy6gWMW6eRgRCj80pE1ZLWY3AaFtl/GwLOGZGuhcFr5\nJ95vPUsy0ASYwIGqNRWOOJ0OdHXakG1PDJXMDbx8nst7qIGat/hCJkfP4RDOgPzM\n8uWpeZGBAgMBAAECggEAEDBD/W5SUPywizppWbrtLhCc2bjkxpeYWqeI2ngMq/XA\nUMhmB9V4d5dxsVD3TIWpaz1bKbez1KhbDFDk54sbaWW+Ksp4hVbDRFaymfhcKk2J\nc46s64UE027nw7n2/ep0G+oJx+e89CA/Szd933kWOu5vy7HkiSs+uVyvWBuObsuX\nc2BYX1RaPEGr6S5eFzpsfmfb4G3p2H0VP7//9BRydUCBfmj5a/pt+79Y3734/fYN\nRoyIBIDhT3wu/cUkoBSv+cftr6YR9qs1Kayvdc+CA0VGLrehekhCJAyVvgIarunP\nUE9wzTD8qR8Ckj5dya9td7hv7RK4gJAkrm2Ox4yCFQKBgQDQZ/FoFvkRTI5vJfFj\nLO6qrcGIGPNKvx9qKVUse4G9jO//ivlspiYbNHfY4c2rdV8RaDyP0ezHM39KxpI/\nKlTxlUNkeRtarHF0F32RLeDMUqTxuxWh/J5YTN9VNHSN8S3yBnWwEVdwcaF8dbbN\n8BrqBBF2kO3GWi4jFhDUufGWbwKBgQD8MN04iJ3TWmfCs6sSF1t8HHjgG1YVDGeq\no5rdiwHp2DijfpCzbZ+Oum6JsZ+eI2oRNZl2RiYmMpF90EiR+d9r27nfIbUc8RtP\n/f4Qsb/6b7es5iGgBmiQjlh7W+obi/aO7ZDZHXyGjzVV9mzSGOSIVPCfPGiJhQ1i\ni5dAljLPDwKBgQChfrqaP5sYJawGQ2/Pu4Ti7CyZa0Q0uu/8EzV2d+qs2SctbiMk\nZ4gF8t2gSjJXWGeoFI9Bn5oNL0HHzyKLIiGa52DG3fYtiI2OOZnLQ7L8glphG+mC\nkkCeCkvSOgjL6YYCE7FlE7sfXl6WFJ3o7dPdXfOuXlZzK3SvKa03OzQTrwKBgEhP\nHm8CRPZ/2nZqG6fhSJrqcwIW9HSujN7RcCsLm23YUE0YkhbQXMqIy/7xDgpCrzvl\n+W1/KZsULsE7QkOQuK3tX3sJ6Cs3OpSSCBHzVU9STwDlL0j57WtdVSNxtEtXs0dB\n+KE4IidW0n0mXgdTmds5N5EAuhyMKM1Tpvee2UyjAoGBAJhRJZbver43gG3QUoj+\nk0/VT8pZmKqR4a2TcjfUtS398JSfDhmtgqcN/t3alRfjryTteMURqcdxPNp++dRs\naipf0WpsRX2zxoA8iZaRZPcIgEV1gZbTm9ab/iz04o0NMDsmyc0deynlkpNdoPKm\nXUi0ap0yhgx3RJ30iVmV/Iu/\n-----END PRIVATE KEY-----\n",
-      "client_email": "firebase-adminsdk-uzxra@chat-a9a04.iam.gserviceaccount.com",
-      "client_id": "104706022019475041732",
-      "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-      "token_uri": "https://oauth2.googleapis.com/token",
-      "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-      "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-uzxra%40chat-a9a04.iam.gserviceaccount.com",
+      "project_id": dotenv.env['FIREBASE_PROJECT_ID'],
+      "private_key_id": dotenv.env['FIREBASE_PRIVATE_KEY_ID'],
+      "private_key": dotenv.env['FIREBASE_PRIVATE_KEY'],
+      "client_email": dotenv.env['FIREBASE_CLIENT_EMAIL'],
+      "client_id": dotenv.env['FIREBASE_CLIENT_ID'],
+      "auth_uri": dotenv.env['FIREBASE_AUTH_URI'],
+      "token_uri": dotenv.env['FIREBASE_TOKEN_URI'],
+      "auth_provider_x509_cert_url":
+          dotenv.env['FIREBASE_AUTH_PROVIDER_CERT_URL'],
+      "client_x509_cert_url": dotenv.env['FIREBASE_CLIENT_CERT_URL'],
       "universe_domain": "googleapis.com"
     });
 
     // Get authenticated client
-    return await auth.clientViaServiceAccount(
-      serviceAccountCredentials, 
-      [_firebaseScope]
-    );
+    return await auth
+        .clientViaServiceAccount(serviceAccountCredentials, [_firebaseScope]);
   }
 }

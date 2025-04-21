@@ -1,5 +1,5 @@
 import 'dart:io';
-  
+import 'package:flutter_dotenv/flutter_dotenv.dart' as dotenv;
 import 'package:chat/firebase_options.dart';
 import 'package:chat/splashScreen.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +18,10 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+
   // Initialize Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -26,21 +29,22 @@ void main() async {
 
   // Initialize Firebase Analytics
   FirebaseAnalytics analytics = FirebaseAnalytics.instance;
-  
+
   // Initialize notification services
   final notificationService = NotificationService();
   await notificationService.initNotifications();
-  
+
   // Initialize theme service
   final themeService = ThemeService();
 
   // Check if app was launched from a notification
   final prefs = await SharedPreferences.getInstance();
-  final bool wasLaunchedFromNotification = prefs.getBool('launched_from_notification') ?? false;
-  
+  final bool wasLaunchedFromNotification =
+      prefs.getBool('launched_from_notification') ?? false;
+
   // Clear the flag after reading
   await prefs.remove('launched_from_notification');
-  
+
   runApp(
     MultiProvider(
       providers: [
@@ -49,7 +53,7 @@ void main() async {
         ),
       ],
       child: MyApp(
-        analytics: analytics, 
+        analytics: analytics,
         notificationService: notificationService,
         wasLaunchedFromNotification: wasLaunchedFromNotification,
       ),
@@ -79,11 +83,11 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     final themeService = Provider.of<ThemeService>(context, listen: false);
     themeService.getThemeMode();
-    
+
     // Initialize notification service with context
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.notificationService.init(context);
-      
+
       // Check for any pending notifications
       widget.notificationService.checkPendingNotifications();
     });
@@ -92,15 +96,15 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     // Determine the initial route based on notification launch
-    Widget initialRoute = widget.wasLaunchedFromNotification 
-      ? _buildNotificationLaunchRoute() 
-      : const SplashScreen();
+    Widget initialRoute = widget.wasLaunchedFromNotification
+        ? _buildNotificationLaunchRoute()
+        : const SplashScreen();
 
     return Consumer<ThemeService>(
       builder: (context, themeService, child) {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
-          navigatorKey: navigatorKey, 
+          navigatorKey: navigatorKey,
           home: initialRoute,
           navigatorObservers: [
             FirebaseAnalyticsObserver(analytics: widget.analytics),
@@ -120,8 +124,10 @@ class _MyAppState extends State<MyApp> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.done) {
           final prefs = snapshot.data!;
-          final String? senderEmail = prefs.getString('pending_notification_sender_email');
-          final String? senderId = prefs.getString('pending_notification_sender_id');
+          final String? senderEmail =
+              prefs.getString('pending_notification_sender_email');
+          final String? senderId =
+              prefs.getString('pending_notification_sender_id');
 
           // Clear the stored notification data
           prefs.remove('pending_notification_sender_email');
@@ -130,13 +136,13 @@ class _MyAppState extends State<MyApp> {
           if (senderEmail != null && senderId != null) {
             // Navigate directly to chat
             return Chat(
-              reciverEmail: senderEmail, 
+              reciverEmail: senderEmail,
               reciverID: senderId,
               allowBack: false,
             );
           }
         }
-        
+
         // Fallback to AuthGate if no notification data
         return AuthGate();
       },
